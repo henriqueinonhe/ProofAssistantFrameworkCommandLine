@@ -1,7 +1,7 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include <iostream>
+#include <iosfwd>
 
 template <class T> class QVector;
 class QString;
