@@ -81,8 +81,7 @@ SOURCES += \
         ../ProofAssistantFramework/theorypluginsrecord.cpp \
         ../ProofAssistantFramework/theoryrecord.cpp \
         functions.cpp \
-        main.cpp \
-        tests.cpp
+        main.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

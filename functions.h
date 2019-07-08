@@ -41,5 +41,6 @@ void listSignaturePlugins();
 void listInferenceTacticPlugins();
 void listPreProcessorPlugins();
 void listPostProcessorsPlugins();
+void theoryMenuList(const QStringList &options, const QStringList &positionalArgs);
 
 #endif // FUNCTIONS_H

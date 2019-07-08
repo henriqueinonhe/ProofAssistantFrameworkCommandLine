@@ -126,7 +126,7 @@ ostream &operator <<(ostream &stream, const QStringList &list)
 {
     for(const QString &string : list)
     {
-        stream << string;
+        stream << string << endl;
     }
     stream << endl;
     return stream;
@@ -135,7 +135,7 @@ ostream &operator <<(ostream &stream, const QStringList &list)
 void listInferenceRulePlugins()
 {
     cout << endl << "Inferece Rule Plugins:" << endl;
-    cout << StorageManager::inferenceRulesPluginsList() << endl << endl;
+    cout << StorageManager::inferenceRulesPluginsList();
 }
 
 void listLogicalSystems(const QStringList &options, const QStringList &positionalArgs)
@@ -218,7 +218,7 @@ void checkPositionalArgumentsExpectedNumber(const QStringList &positionalArgs, c
         for(auto expectedNumber = expectedNumbers.begin(); expectedNumber != expectedNumbers.end() - 1; expectedNumber++)
         {
             errorMsg += QString::number(*expectedNumber);
-            errorMsg += ", or";
+            errorMsg += ", or ";
         }
         errorMsg += QString::number(expectedNumbers.last());
         errorMsg += " arguments were expected, but ";
@@ -267,7 +267,6 @@ void createLogicalSystem()
 void setupInferenceRules(QStringList &inferenceRulesNames)
 {
     listInferenceRulePlugins();
-    cout << endl;
     cout << "Choose inference rule plugins:" << endl;
     cout << "   add <name>          Adds inference rule." << endl;
     cout << "   remove <name>       Removes inference rule." << endl;
@@ -278,6 +277,7 @@ void setupInferenceRules(QStringList &inferenceRulesNames)
         try
         {
             cout << endl;
+            listInferenceRulePlugins();
             cout << "Chosen inference rules:" << endl;
             cout << inferenceRulesNames << endl;
             string command;
@@ -352,17 +352,36 @@ void deleteLogicalSystem(const QStringList &options, const QStringList &position
     checkOptionsAdmissibility(options, QStringList({"s", "silent", "h", "help"})); //TODO
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: list [<options>] [system-name]" << endl;
+        cout << "   -s, --silent            Deletes system name silently" << endl;
+        return;
+    }
+
     const QString systemName = positionalArgs.first();
     checkLogicalSystemExists(systemName);
 
-    cout << endl;
-    cout << "Are you sure you want to delete \"" << systemName << "\"? (Y/N)" << endl;
-
-    string command;
-    getline(cin, command);
-    if(command == "Y")
+    if(options.contains("s") || options.contains("silent"))
     {
         manager.removeLogicalSystem(systemName);
+        cout << endl;
+        cout << "\"" + systemName + "\" removed!" << endl;
+    }
+    else
+    {
+        cout << endl;
+        cout << "Are you sure you want to delete \"" << systemName << "\"? (Y/N)" << endl;
+
+        string command;
+        getline(cin, command);
+        if(command == "Y")
+        {
+            manager.removeLogicalSystem(systemName);
+            cout << endl;
+            cout << "\"" + systemName + "\" removed!" << endl;
+        }
     }
 }
 
@@ -393,13 +412,10 @@ void checkLogicalSystemExists(const QString &systemName)
 
 void logicalSystemMenu()
 {
-    try
+    while(true)
     {
-        while(true)
+        try
         {
-            string command;
-            getline(cin, command);
-
             cout << endl
                  << "Logical system menu:" << endl
                  << "   list              List theories" << endl
@@ -412,6 +428,8 @@ void logicalSystemMenu()
                  << "   post              List post processor plugins" << endl
                  << "   unload            Unload logical system" << endl;
 
+            string command;
+            getline(cin, command);
             parser.parse(command);
             const QString mainCommand = parser.getMainCommand();
             const QStringList options = parser.getOptions();
@@ -428,6 +446,7 @@ void logicalSystemMenu()
             else if(mainCommand == "load")
             {
                 loadTheory(options, positionalArgs);
+                theoryMenu();
             }
             else if(mainCommand == "delete")
             {
@@ -459,14 +478,14 @@ void logicalSystemMenu()
                 invalidCommand(command.data());
             }
         }
-    }
-    catch(const invalid_argument &e)
-    {
-        cerr << endl << e.what() << endl;
-    }
-    catch(const runtime_error &e)
-    {
-        cerr << endl << e.what() << endl;
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+        catch(const runtime_error &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
     }
 }
 
@@ -502,6 +521,7 @@ void listTheories(const QStringList &options, const QStringList &positionalArgs)
         filteredRecords = filterRecords(theoryName, records);
     }
 
+    cout << endl;
     cout << "Theory list:" << endl;
     if(options.contains("d") || options.contains("description"))
     {
@@ -547,11 +567,12 @@ void createTheory()
     getline(cin, command);
     if(command == "Y")
     {
-        //Setup signature Plugin
+        //Setup signature Plugin //TODO
+        //This probably should be done automatically using the plugin itself
     }
 
     setupAxioms(builder);
-    manager.createTheory(builder, TheoryPluginsRecord()); //TODO
+    manager.createTheory(builder, TheoryPluginsRecord());
 }
 
 void setupSignature(QString &signaturePluginName)
@@ -581,7 +602,7 @@ void setupSignature(QString &signaturePluginName)
             cerr << endl << e.what() << endl;
         }
     }
-    }
+}
 
 void checkSignatureExists(const QString &name)
 {
@@ -676,20 +697,41 @@ void loadTheory(const QStringList &options, const QStringList &positionalArgs)
 
     cout << endl
          << "Theory " << theoryName << " loaded." << endl;
-
-    //Begin theory routine
 }
 
 void deleteTheory(const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList());
+    checkOptionsAdmissibility(options, QStringList({"h", "help", "s", "silent"}));
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
-    const QString &theoryName = positionalArgs.first();
-    manager.removeTheory(theoryName);
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: delete [<options>] <theory-name>" << endl;
+        cout << "   -s, --silent            Deletes theory silently" << endl;
+    }
 
-    cout << endl
-         << "Theory " << theoryName << " deleted." << endl;
+    const QString &theoryName = positionalArgs.first();
+    if(options.contains("s") || options.contains("silent"))
+    {
+        manager.removeTheory(theoryName);
+        cout << endl
+             << "Theory \"" << theoryName << "\" deleted." << endl;
+    }
+    else
+    {
+        cout << endl;
+        cout << "Are you sure you want to delete \"" + theoryName + "\"?(Y/N)" << endl;
+
+        string command;
+        getline(cin, command);
+        if(command == "Y")
+        {
+            manager.removeTheory(theoryName);
+            cout << endl
+                 << "Theory \"" << theoryName << "\" deleted." << endl;
+        }
+    }
 }
 
 void listSignaturePlugins()
@@ -718,5 +760,65 @@ void listPostProcessorsPlugins()
 
 void theoryMenu()
 {
+    while(true)
+    {
+        try
+        {
+            cout << endl;
+            cout << "Theory menu:" << endl;
+            cout << "list           List proofs, axioms or plugins" << endl;
+            cout << "add            Add proof or plugin" << endl;
+            cout << "remove         Remove proof or plugin" << endl;
+            cout << "load           Load proof" << endl;
+            cout << "setup          Setup plugin" << endl;
 
+            string command;
+            getline(cin, command);
+            parser.parse(command);
+            QString mainCommand = parser.getMainCommand();
+            QStringList options = parser.getOptions();
+            QStringList positionalArgs = parser.getPositionalArgs();
+
+            if(mainCommand == "list")
+            {
+                theoryMenuList(options, positionalArgs);
+            }
+            else if(mainCommand == "add")
+            {
+
+            }
+            else if(mainCommand == "remove")
+            {
+
+            }
+            else if(mainCommand == "load")
+            {
+
+            }
+            else if(mainCommand == "setup")
+            {
+
+            }
+            else
+            {
+                invalidCommand(mainCommand);
+            }
+        }
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+        catch(const runtime_error &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+    }
+}
+
+
+void theoryMenuList(const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"p", "proofs", "a", "axioms", "r", "rules", "e", "pre", "o", "post", "t", "tactics"}));
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+    //TODO
 }
