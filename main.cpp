@@ -6,4 +6,5 @@ int main()
 {
     createRootDir();
     entryMenu();
+    return 0;
 }

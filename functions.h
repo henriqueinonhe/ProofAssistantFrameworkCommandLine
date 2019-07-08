@@ -42,5 +42,12 @@ void listInferenceTacticPlugins();
 void listPreProcessorPlugins();
 void listPostProcessorsPlugins();
 void theoryMenuList(const QStringList &options, const QStringList &positionalArgs);
+void listCurrentlyLoadedInferenceRules(const QStringList &options);
+void listCurrentTheoryAxioms();
+void theoryMenuAdd(const QStringList &options, const QStringList &positionalArgs);
+void createProof();
+void setupProofPremises(QStringList &premises);
+void setupProofConclusion(QString &conclusion);
+void loadProof(const QStringList &options, const QStringList &positionalArgs);
 
 #endif // FUNCTIONS_H

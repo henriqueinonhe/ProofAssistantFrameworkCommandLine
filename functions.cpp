@@ -59,7 +59,8 @@ void entryMenu()
                  << "   new            Create logical system" << endl
                  << "   load           Load logical system" << endl
                  << "   delete         Delete logical system" << endl
-                 << "   rules          List inference rules" << endl << endl;
+                 << "   rules          List inference rules" << endl
+                 << "   quit           Quits" << endl << endl;
 
             string command;
             getline(cin, command);
@@ -89,6 +90,10 @@ void entryMenu()
             else if(mainCommand == "rules")
             {
                 listInferenceRulePlugins();
+            }
+            else if(mainCommand == "quit")
+            {
+                return;
             }
             else
             {
@@ -422,11 +427,12 @@ void logicalSystemMenu()
                  << "   new               Create theory" << endl
                  << "   load              Load theory" << endl
                  << "   delete            Delete theory" << endl
+                 << "   rules             List current inference rules" << endl
                  << "   signature         List signature plugins" << endl
                  << "   tactic            List inference tactic plugins" << endl
                  << "   pre               List pre processor plugins" << endl
                  << "   post              List post processor plugins" << endl
-                 << "   unload            Unload logical system" << endl;
+                 << "   unload            Unload logical system" << endl << endl;
 
             string command;
             getline(cin, command);
@@ -451,6 +457,10 @@ void logicalSystemMenu()
             else if(mainCommand == "delete")
             {
                 deleteTheory(options, positionalArgs);
+            }
+            else if(mainCommand == "rules")
+            {
+                listCurrentlyLoadedInferenceRules(QStringList({}));
             }
             else if(mainCommand == "signature")
             {
@@ -572,7 +582,7 @@ void createTheory()
     }
 
     setupAxioms(builder);
-    manager.createTheory(builder, TheoryPluginsRecord());
+    manager.createTheory(builder, TheoryPluginsRecord(signaturePluginName));
 }
 
 void setupSignature(QString &signaturePluginName)
@@ -771,6 +781,7 @@ void theoryMenu()
             cout << "remove         Remove proof or plugin" << endl;
             cout << "load           Load proof" << endl;
             cout << "setup          Setup plugin" << endl;
+            cout << "unload         Unload theory" << endl;
 
             string command;
             getline(cin, command);
@@ -779,13 +790,14 @@ void theoryMenu()
             QStringList options = parser.getOptions();
             QStringList positionalArgs = parser.getPositionalArgs();
 
+            //TODO
             if(mainCommand == "list")
             {
                 theoryMenuList(options, positionalArgs);
             }
             else if(mainCommand == "add")
             {
-
+                theoryMenuAdd(options, positionalArgs);
             }
             else if(mainCommand == "remove")
             {
@@ -793,11 +805,16 @@ void theoryMenu()
             }
             else if(mainCommand == "load")
             {
-
+                loadProof(options, positionalArgs);
             }
             else if(mainCommand == "setup")
             {
 
+            }
+            else if(mainCommand == "unload")
+            {
+                manager.unloadTheory();
+                return;
             }
             else
             {
@@ -818,7 +835,214 @@ void theoryMenu()
 
 void theoryMenuList(const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"p", "proofs", "a", "axioms", "r", "rules", "e", "pre", "o", "post", "t", "tactics"}));
+    checkOptionsAdmissibility(options, QStringList({"h", "help", "p", "proofs", "a", "axioms", "r", "rules", "e", "pre", "o", "post", "t", "tactics", "d", "description", "l", "loaded"}));
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: list [<options>] [<item-name>]" << endl;
+        cout << "   -d, --description           Lists with descriptions" << endl;
+        cout << "   -p, --proofs                Lists proofs" << endl;
+        cout << "   -a, --axioms                Lists axioms" << endl;
+        cout << "   -r, --rules                 Lists loaded inference rules" << endl;
+        cout << "   -t, --tactics               List inference tactics" << endl;
+        cout << "   -e, --pre                   Lists pre processors" << endl;
+        cout << "   -o, --post                  Lists post processors" << endl;
+        cout << "   -l, --loaded                Lists loaded items only (when appliable)" << endl;
+        return;
+    }
+
+
     //TODO
+    if(options.contains("a") || options.contains("axioms"))
+    {
+        listCurrentTheoryAxioms();
+    }
+    else if(options.contains("r") || options.contains("rules"))
+    {
+        listCurrentlyLoadedInferenceRules(options);
+    }
+    else if(options.contains("t") || options.contains("tactics"))
+    {
+        if(options.contains("l") || options.contains("loaded"))
+        {
+        }
+        else
+        {
+            listPreProcessorPlugins();
+        }
+    }
+    else if(options.contains("e") || options.contains("pre"))
+    {
+
+    }
+    else if(options.contains("o") || options.contains("post"))
+    {
+
+    }
+}
+
+void listCurrentlyLoadedInferenceRules(const QStringList &options)
+{
+    const LogicalSystem * const activeSystem = manager.getActiveLogicalSystem();
+    const auto rules = activeSystem->getInferenceRules();
+    cout << endl;
+    QString output;
+    for(const auto &rule : rules)
+    {
+        output += rule->name() += "\n";
+    }
+    if(options.contains("d") || options.contains("description"))
+    {
+        for(const auto &rule : rules)
+        {
+            //TODO Implement descriptions in inference rules
+        }
+    }
+    cout << output;
+}
+
+void listCurrentTheoryAxioms()
+{
+    const Theory * const currentTheory = manager.getActiveTheory();
+    const auto axioms = currentTheory->getAxioms();
+    cout << endl;
+    for(const auto &axiom : axioms)
+    {
+        cout << axiom.formattedString() << endl;
+    }
+}
+
+void theoryMenuAdd(const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"h", "help", "p", "proof", "t", "tactic", "e", "pre", "o", "post"}));
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0}));
+
+    //TODO
+
+    if(options.contains("p") || options.contains("proof"))
+    {
+        createProof();
+    }
+}
+
+void createProof()
+{
+    cout << endl;
+    cout << "Enter proof name:" << endl;
+
+    string command;
+    getline(cin, command);
+    const QString name(command.data());
+
+    cout << endl;
+    cout << "Enter proof description:" << endl;
+
+    getline(cin, command);
+    const QString description(command.data());
+
+    cout << endl;
+    cout << "Enter proof premises:" << endl;
+    cout << "   add         Add premiss" << endl;
+    cout << "   remove      Remove premiss" << endl;
+    cout << "   done        Done" << endl;
+
+    QStringList premises;
+    setupProofPremises(premises);
+
+    cout << endl;
+    cout << "Enter proof conclusion:" << endl;
+
+    QString conclusion;
+    setupProofConclusion(conclusion);
+
+    manager.createProof(name, description, premises, conclusion);
+    cout << endl;
+    cout << "Proof created!" << endl; //FIXME Fix conclusion message
+}
+
+void setupProofPremises(QStringList &premises)
+{
+    const Theory * const theory = manager.getActiveTheory();
+    Parser formulaParser(theory->getSignature().get(), manager.getActiveLogicalSystem()->getWffType());
+    while(true)
+    {
+        if(!premises.isEmpty())
+        {
+            cout << endl;
+            for(const auto &premiss : premises)
+            {
+                cout << premiss << endl;
+            }
+        }
+        try
+        {
+            string command;
+            getline(cin, command);
+            parser.parse(command);
+            const QString mainCommand = parser.getMainCommand();
+            const QStringList options = parser.getOptions();
+            const QStringList positionalArgs = parser.getPositionalArgs();
+
+            checkOptionsAdmissibility(options, QStringList({}));
+            checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+
+            if(mainCommand == "add")
+            {
+                const QString premiss = positionalArgs.first();
+                formulaParser.parse(premiss);
+                premises << premiss;
+            }
+            else if(mainCommand == "remove")
+            {
+                const QString premiss = positionalArgs.first();
+                premises.removeAll(premiss);
+            }
+            else if(mainCommand == "done")
+            {
+                return;
+            }
+            else
+            {
+                invalidCommand(mainCommand);
+            }
+        }
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+        catch(const runtime_error &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+    }
+}
+
+void setupProofConclusion(QString &conclusion)
+{
+    const Theory * const theory = manager.getActiveTheory();
+    Parser formulaParser(theory->getSignature().get(), manager.getActiveLogicalSystem()->getWffType());
+    while(true)
+    {
+        string command;
+        getline(cin, command);
+        QString formula = command.data();
+
+        try
+        {
+            formulaParser.parse(formula);
+            conclusion = formula;
+            return;
+        }
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+    }
+}
+
+void loadProof(const QStringList &options, const QStringList &positionalArgs)
+{
+
 }
