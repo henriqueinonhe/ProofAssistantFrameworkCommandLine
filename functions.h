@@ -8,11 +8,13 @@ class QString;
 class QStringList;
 class Formula;
 class TheoryBuilder;
+class ProofAssistant;
 
 //Menus
 void entryMenu();
 void logicalSystemMenu();
 void theoryMenu();
+void proofAssistantMenu(ProofAssistant &assistant);
 
 //Other
 void createRootDir();

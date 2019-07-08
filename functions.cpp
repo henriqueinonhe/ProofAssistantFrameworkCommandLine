@@ -9,6 +9,7 @@
 #include "theorybuilder.h"
 #include "pluginmanager.h"
 #include "theorypluginsrecord.h"
+#include "proofassistant.h"
 
 ProgramManager manager;
 CommandLineParser parser;
@@ -986,7 +987,7 @@ void setupProofPremises(QStringList &premises)
             const QStringList positionalArgs = parser.getPositionalArgs();
 
             checkOptionsAdmissibility(options, QStringList({}));
-            checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+            checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
 
             if(mainCommand == "add")
             {
@@ -1044,5 +1045,70 @@ void setupProofConclusion(QString &conclusion)
 
 void loadProof(const QStringList &options, const QStringList &positionalArgs)
 {
+    checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
+    //TODO
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: load [<options>] <proof-name>" << endl;
+        cout << "   -i, --id            Load proof by id" << endl;
+    }
+
+    if(options.contains("i") || options.contains("id"))
+    {
+        const unsigned int id = positionalArgs.first().toUInt();
+        ProofAssistant assistant = manager.loadProof(id);
+        proofAssistantMenu(assistant);
+    }
+    else
+    {
+
+    }
+
+}
+
+void proofAssistantMenu(ProofAssistant &assistant)
+{
+    //TODO
+    cout << endl;
+    cout << "Proof loaded!" << endl;
+
+    while(true)
+    {
+        cout << endl;
+        const Proof proof = assistant.getProof();
+        const unsigned int linesOfProofSize = proof.getLinesOfProof().size();
+        for(unsigned int index = 0; index < linesOfProofSize; index++)
+        {
+            const unsigned int lineNumber = index + 1;
+            cout << lineNumber << ". "
+                 << proof.getLineOfProof(lineNumber).getFormula().formattedString() << " "
+                 << proof.getLineOfProof(lineNumber).getJustification().getInferenceRuleCallCommand() << " "
+                 << proof.getLineOfProof(lineNumber).getJustification().getArgumentList();
+        }
+
+        try
+        {
+            string command;
+            getline(cin, command);
+            parser.parse(command);
+            const QString mainCommand = parser.getMainCommand();
+            const QStringList options = parser.getOptions();
+            const QStringList positionalArgs = parser.getPositionalArgs();
+
+            if(mainCommand == "call")
+            {
+                const QString callCommand = positionalArgs.first();
+                const QStringList argumentList = positionalArgs.mid(1);
+                assistant.applyInferenceRule(callCommand, argumentList);
+            }
+        }
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+    }
 }
