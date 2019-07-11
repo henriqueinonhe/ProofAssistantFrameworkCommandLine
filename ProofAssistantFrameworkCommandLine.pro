@@ -81,7 +81,9 @@ SOURCES += \
         ../ProofAssistantFramework/theorypluginsrecord.cpp \
         ../ProofAssistantFramework/theoryrecord.cpp \
         functions.cpp \
-        main.cpp
+        main.cpp \
+        signaturecliplugin.cpp \
+        stringprocessorcliplugin.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -155,4 +157,6 @@ HEADERS += \
     ../ProofAssistantFramework/theorypluginsrecord.h \
     ../ProofAssistantFramework/theoryrecord.h \
     catch.hpp \
-    functions.h
+    functions.h \
+    signaturecliplugin.h \
+    stringprocessorcliplugin.h

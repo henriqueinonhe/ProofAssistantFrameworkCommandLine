@@ -26,13 +26,13 @@ void listLogicalSystems(const QStringList &options, const QStringList &positiona
 void checkOptionsAdmissibility(const QStringList &options, const QStringList &admissibleOptions);
 void checkPositionalArgumentsExpectedNumber(const QStringList &positionalArgs, const QVector<int> &expectedNumbers);
 template <class T> QVector<T> filterRecords(const QString &name, const QVector<T> &records);
-void createLogicalSystem();
+void createLogicalSystem(const QStringList &options);
 void setupInferenceRules(QStringList&);
 void deleteLogicalSystem(const QStringList &options, const QStringList &positionalArgs);
 void loadLogicalSystem(const QStringList &options, const QStringList &positionalArgs);
 void checkLogicalSystemExists(const QString &systemName);
 void listTheories(const QStringList &options, const QStringList &positionalArgs);
-void createTheory();
+void createTheory(const QStringList &options);
 void setupSignature(QString &signaturePluginName);
 void checkSignatureExists(const QString &name);
 void setupAxioms(TheoryBuilder &builder);
