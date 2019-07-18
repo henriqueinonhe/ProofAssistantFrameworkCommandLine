@@ -56,7 +56,6 @@ SOURCES += \
         ../Language/Type/typeparsingtreenode.cpp \
         ../Language/Type/typetoken.cpp \
         ../Language/Type/typetokenstring.cpp \
-        ../Language/Utils/dirtyfix.cpp \
         ../ProofAssistantFramework/inferenceprocedure.cpp \
         ../ProofAssistantFramework/inferencerule.cpp \
         ../ProofAssistantFramework/inferencetactic.cpp \
@@ -65,17 +64,16 @@ SOURCES += \
         ../ProofAssistantFramework/lineofproofsection.cpp \
         ../ProofAssistantFramework/lineofproofsectionmanager.cpp \
         ../ProofAssistantFramework/logicalsystem.cpp \
+        ../ProofAssistantFramework/logicalsystempluginsrecord.cpp \
         ../ProofAssistantFramework/logicalsystemrecord.cpp \
-        ../ProofAssistantFramework/logosprogrammanager.cpp \
         ../ProofAssistantFramework/pluginmanager.cpp \
         ../ProofAssistantFramework/programmanager.cpp \
         ../ProofAssistantFramework/proof.cpp \
         ../ProofAssistantFramework/proofassistant.cpp \
         ../ProofAssistantFramework/prooflinks.cpp \
         ../ProofAssistantFramework/proofrecord.cpp \
-        ../ProofAssistantFramework/signatureplugin.cpp \
         ../ProofAssistantFramework/storagemanager.cpp \
-        ../ProofAssistantFramework/stringprocessorplugin.cpp \
+        ../ProofAssistantFramework/stringprocessormanager.cpp \
         ../ProofAssistantFramework/theory.cpp \
         ../ProofAssistantFramework/theorybuilder.cpp \
         ../ProofAssistantFramework/theorypluginsrecord.cpp \
@@ -125,20 +123,18 @@ HEADERS += \
     ../Language/Type/typetoken.h \
     ../Language/Type/typetokenstring.h \
     ../Language/Utils/containerauxiliarytools.h \
-    ../Language/Utils/dirtyfix.h \
     ../Language/Utils/parsingauxiliarytools.h \
     ../Language/Utils/pool.h \
     ../ProofAssistantFramework/dummyclasses.h \
     ../ProofAssistantFramework/inferenceprocedure.h \
     ../ProofAssistantFramework/inferencerule.h \
-    ../ProofAssistantFramework/inferenceruleplugin.h \
     ../ProofAssistantFramework/inferencetactic.h \
-    ../ProofAssistantFramework/inferencetacticplugin.h \
     ../ProofAssistantFramework/justification.h \
     ../ProofAssistantFramework/lineofproof.h \
     ../ProofAssistantFramework/lineofproofsection.h \
     ../ProofAssistantFramework/lineofproofsectionmanager.h \
     ../ProofAssistantFramework/logicalsystem.h \
+    ../ProofAssistantFramework/logicalsystempluginsrecord.h \
     ../ProofAssistantFramework/logicalsystemrecord.h \
     ../ProofAssistantFramework/logosprogrammanager.h \
     ../ProofAssistantFramework/pluginfactoryinterface.h \
@@ -148,10 +144,9 @@ HEADERS += \
     ../ProofAssistantFramework/proofassistant.h \
     ../ProofAssistantFramework/prooflinks.h \
     ../ProofAssistantFramework/proofrecord.h \
-    ../ProofAssistantFramework/signatureplugin.h \
     ../ProofAssistantFramework/smartpointersserialization.h \
     ../ProofAssistantFramework/storagemanager.h \
-    ../ProofAssistantFramework/stringprocessorplugin.h \
+    ../ProofAssistantFramework/stringprocessormanager.h \
     ../ProofAssistantFramework/theory.h \
     ../ProofAssistantFramework/theorybuilder.h \
     ../ProofAssistantFramework/theorypluginsrecord.h \
