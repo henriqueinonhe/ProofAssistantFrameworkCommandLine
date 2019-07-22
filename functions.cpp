@@ -41,6 +41,7 @@ void createRootDir()
         dir.mkdir("Inference Tactics");
         dir.mkdir("Pre Processors");
         dir.mkdir("Post Processors");
+        dir.mkdir("Proofs");
         dir.cdUp();
     }
 
@@ -85,7 +86,6 @@ void entryMenu()
             else if(mainCommand == "load")
             {
                 loadLogicalSystem(options, positionalArgs);
-                logicalSystemMenu();
             }
             else if(mainCommand == "delete")
             {
@@ -150,22 +150,15 @@ ostream &operator <<(ostream &stream, const QStringList &list)
 
 void listInferenceRulePlugins()
 {
-    // Standardize
     cout << endl << "Inferece Rule Plugins:" << endl;
     const auto list = StorageManager::inferenceRulesPluginsList();
-    auto ruleCount = 1;
-    for(const auto &rule : list)
-    {
-        cout << ruleCount << ". " << rule.mid(0, rule.size() - 4) << endl; // Refactor magic number
-        ruleCount++;
-    }
+    outputOrderedPluginList(list);
 }
 
 void listLogicalSystems(const QStringList &options, const QStringList &positionalArgs)
 {
     const QStringList admissibleOptions({"h", "help", "d", "description"});
     checkOptionsAdmissibility(options, admissibleOptions);
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -175,6 +168,7 @@ void listLogicalSystems(const QStringList &options, const QStringList &positiona
         return;
     }
 
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
     auto records = StorageManager::retrieveLogicalSystemsRecords();
     if(records.isEmpty())
     {
@@ -188,7 +182,6 @@ void listLogicalSystems(const QStringList &options, const QStringList &positiona
         const auto &systemName = positionalArgs.first();
         records = filterRecords(systemName, records);
     }
-
     cout << endl;
     cout << "Logical Systems:" << endl;
     if(options.contains("d") || options.contains("description"))
@@ -280,8 +273,8 @@ void createLogicalSystem(const QStringList &options)
     {
         cout << endl;
         cout << "usage: new" << endl;
-        cout << "Enters logical system creation setup" << endl;
-        cout << "You can quit the creation process by typing \"QUIT\"" << endl;
+        cout << "   Enters logical system creation setup" << endl;
+        cout << "   You can quit the creation process by typing \"QUIT\"" << endl;
         return;
     }
 
@@ -304,8 +297,22 @@ void createLogicalSystem(const QStringList &options)
     }
 
     const auto signaturePluginName = setupSignaturePlugin();
+    if(signaturePluginName == "QUIT")
+    {
+        return;
+    }
+
     const auto inferenceRulesPluginNames = setupInferenceRulesPlugins();
+    if(!inferenceRulesPluginNames.isEmpty() && inferenceRulesPluginNames.first() == "QUIT")
+    {
+        return;
+    }
+
     const auto proofPluginName = setupProofPlugin();
+    if(proofPluginName == "QUIT")
+    {
+        return;
+    }
 
     cout << endl;
     cout << "Write a type for the well formed formulas." << endl;
@@ -322,7 +329,7 @@ void createLogicalSystem(const QStringList &options)
                                 signaturePluginName,
                                 proofPluginName,
                                 Type(wffType.data()));
-    cout << "Logical system created!" << endl;
+    cout << endl << "Logical system \"" << name << "\" created!" << endl;
 }
 
 QStringList setupInferenceRulesPlugins()
@@ -425,6 +432,10 @@ QStringList setupInferenceRulesPlugins()
             {
                 break;
             }
+            else if(mainCommand == "QUIT")
+            {
+                return QStringList({"QUIT"});
+            }
             else
             {
                 invalidCommand(mainCommand);
@@ -445,8 +456,7 @@ QStringList setupInferenceRulesPlugins()
 
 void deleteLogicalSystem(const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"s", "silent", "h", "help"})); //TODO
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    checkOptionsAdmissibility(options, QStringList({"s", "silent", "h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -456,6 +466,7 @@ void deleteLogicalSystem(const QStringList &options, const QStringList &position
         return;
     }
 
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto systemName = positionalArgs.first();
     checkLogicalSystemExists(systemName);
 
@@ -483,21 +494,22 @@ void deleteLogicalSystem(const QStringList &options, const QStringList &position
 
 void loadLogicalSystem(const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList());
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
         cout << endl;
         cout << "usage: load <exact-system-name>" << endl;
+        return;
     }
 
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto systemName = positionalArgs.first();
-    checkLogicalSystemExists(systemName); //NOTE Probably this is unecessary
-
+    checkLogicalSystemExists(systemName);
     manager.loadLogicalSystem(systemName);
     cout << endl;
     cout << "Logical system \"" << manager.getActiveLogicalSystem()->getName() << "\" loaded." << endl;
+    logicalSystemMenu();
 }
 
 void checkLogicalSystemExists(const QString &systemName)
@@ -550,7 +562,6 @@ void logicalSystemMenu()
             else if(mainCommand == "load")
             {
                 loadTheory(options, positionalArgs);
-                theoryMenu();
             }
             else if(mainCommand == "delete")
             {
@@ -558,7 +569,7 @@ void logicalSystemMenu()
             }
             else if(mainCommand == "rules")
             {
-                listCurrentlyLoadedInferenceRulesPlugins(QStringList({}));
+                listCurrentlyLoadedInferenceRulesPlugins();
             }
             else if(mainCommand == "signature")
             {
@@ -619,7 +630,8 @@ void listTheories(const QStringList &options, const QStringList &positionalArgs)
 
     if(records.isEmpty())
     {
-        throw runtime_error("There are currently no theories.");
+        cout << endl << "There are currently no theories." << endl;
+        return;
     }
 
     QVector<TheoryRecord> filteredRecords;
@@ -683,17 +695,16 @@ void createTheory(const QStringList &options)
         return;
     }
 
-    //FIXME Fix theory builder
     const auto logicalSystemName = manager.getActiveLogicalSystem()->getName();
     const auto logicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(logicalSystemName);
     const auto signaturePluginName = logicalSystemPluginsRecord.getSignaturePluginName();
     auto signature = PluginManager::fetchPlugin<Signature>(StorageManager::signaturePluginPath(signaturePluginName));
+    //Convert signature to SignatureCLIPlugin and setup!
     TheoryBuilder builder(manager.getActiveLogicalSystem(),
                           signature,
                           name.data(),
                           description.data());
 
-    //TODO setup signature if necessary
     //TODO setup formatters and string processors
 
     setupAxioms(builder);
@@ -710,9 +721,13 @@ QString setupSignaturePlugin()
     {
         try
         {
-            string signatureName;
-            getline(cin, signatureName);
-            QString wrappedName(signatureName.data());
+            string signaturePluginName;
+            getline(cin, signaturePluginName);
+            if(signaturePluginName == "QUIT")
+            {
+                return "QUIT";
+            }
+            QString wrappedName(signaturePluginName.data());
 
             checkSignaturePluginExists(wrappedName);
             return wrappedName;
@@ -830,7 +845,6 @@ void checkSetupAxiomsPositionalArgs(const QStringList &positionalArgs)
 void loadTheory(const QStringList &options, const QStringList &positionalArgs)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help"}));
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -839,25 +853,28 @@ void loadTheory(const QStringList &options, const QStringList &positionalArgs)
         return;
     }
 
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto &theoryName = positionalArgs.first();
     manager.loadTheory(theoryName);
 
     cout << endl
          << "Theory " << theoryName << " loaded." << endl;
+    theoryMenu();
 }
 
 void deleteTheory(const QStringList &options, const QStringList &positionalArgs)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "s", "silent"}));
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
     if(options.contains("h") || options.contains("help"))
     {
         cout << endl;
         cout << "usage: delete [<options>] <theory-name>" << endl;
         cout << "   -s, --silent            Deletes theory silently" << endl;
+        return;
     }
 
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto &theoryName = positionalArgs.first();
     if(options.contains("s") || options.contains("silent"))
     {
@@ -883,26 +900,26 @@ void deleteTheory(const QStringList &options, const QStringList &positionalArgs)
 
 void listSignaturePlugins()
 {
-    cout << endl << "Signature plugins list:" << endl;
-    cout << endl << StorageManager::signaturePluginsList();
+    cout << endl << "Signature Plugins List:" << endl;
+    outputOrderedPluginList(StorageManager::signaturePluginsList());
 }
 
 void listInferenceTacticPlugins()
 {
-    cout << endl << "Inference tactic plugins list:" << endl;
-    cout << endl << StorageManager::inferenceTacticsPluginsList();
+    cout << endl << "Inference Tactic Plugins List:" << endl;
+    outputOrderedPluginList(StorageManager::inferenceTacticsPluginsList());
 }
 
 void listPreProcessorPlugins()
 {
     cout << endl << "Pre processor plugins list:" << endl;
-    cout << endl << StorageManager::preProcessorPluginsList();
+    outputOrderedPluginList(StorageManager::preProcessorPluginsList());
 }
 
 void listPostProcessorsPlugins()
 {
     cout << endl << "Post processor plugins list" << endl;
-    cout << endl << StorageManager::postProcessorPluginsList();
+    outputOrderedPluginList(StorageManager::postProcessorPluginsList());
 }
 
 void theoryMenu()
@@ -998,7 +1015,7 @@ void theoryMenuList(const QStringList &options, const QStringList &positionalArg
     }
     else if(options.contains("r") || options.contains("rules"))
     {
-        listCurrentlyLoadedInferenceRulesPlugins(options);
+        listCurrentlyLoadedInferenceRulesPlugins();
     }
     else if(options.contains("t") || options.contains("tactics"))
     {
@@ -1020,33 +1037,13 @@ void theoryMenuList(const QStringList &options, const QStringList &positionalArg
     }
 }
 
-void listCurrentlyLoadedInferenceRulesPlugins(const QStringList &options)
+void listCurrentlyLoadedInferenceRulesPlugins()
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "d", "description"}));
-
-    if(options.contains("h"), options.contains("help"))
-    {
-        cout << endl;
-        cout << "usage: rules TODO!" << endl;
-    }
-
-    const auto activeSystem = manager.getActiveLogicalSystem();
-    const auto rules = activeSystem->getInferenceRules();
-    cout << endl;
-    cout << "Currently loaded inference rules:" << endl;
-    QString output;
-    for(const auto &rule : rules)
-    {
-        output += rule->name() += "\n";
-    }
-    if(options.contains("d") || options.contains("description"))
-    {
-        for(const auto &rule : rules)
-        {
-            //TODO Implement descriptions in inference rules
-        }
-    }
-    cout << output;
+    const auto loadedLogicalSystemName = manager.getActiveLogicalSystem()->getName();
+    const auto loadedLogicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(loadedLogicalSystemName);
+    const auto loadedInferenceRulesPluginsNameList = loadedLogicalSystemPluginsRecord.getInferenceRulesNamesList();
+    cout << endl << "Loaded Inference Rules Plugins List:" << endl;
+    outputOrderedList(loadedInferenceRulesPluginsNameList);
 }
 
 void listCurrentTheoryAxioms()
@@ -1290,15 +1287,8 @@ void proofAssistantMenu(ProofAssistant &assistant)
 
 void listProofPlugins()
 {
-    //Standardize
-    cout << endl << "Proof Plugins:" << endl;
-    const auto list = StorageManager::proofPluginsList();
-    auto proofCount = 1;
-    for(const auto &proof : list)
-    {
-        cout << proofCount << "." << proof.mid(0, proof.size() - 4) << endl; // Refactor magic number (take off .dll)
-        proofCount++;
-    }
+    cout << endl << "Proof Plugins List:" << endl;
+    outputOrderedPluginList(StorageManager::proofPluginsList());
 }
 
 QString setupProofPlugin()
@@ -1311,9 +1301,14 @@ QString setupProofPlugin()
     {
         try
         {
-            string proofName;
-            getline(cin, proofName);
-            QString wrappedName(proofName.data());
+            string proofPluginName;
+            getline(cin, proofPluginName);
+            if(proofPluginName == "QUIT")
+            {
+                return "QUIT";
+            }
+
+            QString wrappedName(proofPluginName.data());
 
             checkProofPluginExists(wrappedName);
             return wrappedName;
@@ -1344,7 +1339,7 @@ void checkProofPluginExists(const QString &pluginName)
 void listCurrentlyLoadedSignaturePlugin()
 {
     cout << endl;
-    cout << "Currently loaded signature plugin is: ";
+    cout << "Currently Loaded Signature Plugin:" << endl;
     const auto logicalSystemName = manager.getActiveLogicalSystem()->getName();
     const auto logicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(logicalSystemName);
     cout << logicalSystemPluginsRecord.getSignaturePluginName() << endl;
@@ -1353,8 +1348,29 @@ void listCurrentlyLoadedSignaturePlugin()
 void listCurrentlyLoadedProofPlugin()
 {
     cout << endl;
-    cout << "Currently loaded proof plugin is: ";
+    cout << "Currently Loaded Proof Plugin:" << endl;
     const auto logicalSystemName = manager.getActiveLogicalSystem()->getName();
     const auto logicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(logicalSystemName);
     cout << logicalSystemPluginsRecord.getProofPluginName() << endl;
+}
+
+void outputOrderedPluginList(const QStringList &pluginList)
+{
+    auto entryCount = 1;
+    for(const auto &entry : pluginList)
+    {
+        const auto entryWithoutDllEnding = entry.mid(0, entry.size() - 4);
+        cout << entryCount << ". " << entryWithoutDllEnding << endl;
+        entryCount++;
+    }
+}
+
+void outputOrderedList(const QStringList &list)
+{
+    auto entryCount = 1;
+    for(const auto &entry : list)
+    {
+        cout << entryCount << ". " << entry << endl;
+        entryCount++;
+    }
 }
