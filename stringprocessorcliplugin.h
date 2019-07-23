@@ -6,7 +6,6 @@
 class StringProcessorCLIPlugin : public StringProcessor
 {
 public:
-    StringProcessorCLIPlugin();
 
     // StringProcessor interface
 public:

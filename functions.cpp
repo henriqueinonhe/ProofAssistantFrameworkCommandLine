@@ -3,15 +3,19 @@
 #include <QDir>
 #include "storagemanager.h"
 #include "commandlineparser.h"
-#include "programmanager.h"
 #include "logicalsystemrecord.h"
 #include "theoryrecord.h"
 #include "theorybuilder.h"
 #include "pluginmanager.h"
 #include "theorypluginsrecord.h"
 #include "proofassistant.h"
+#include "programassistant.h"
+#include "logicalsystemassistant.h"
+#include "theoryassistant.h"
+#include "logicalsystempluginsrecord.h"
+#include "lineofproof.h"
 
-ProgramManager manager;
+ProgramAssistant programAssistant;
 CommandLineParser parser;
 
 //Routines
@@ -65,6 +69,7 @@ void entryMenu()
                  << "   signatures     List signature plugins" << endl
                  << "   rules          List inference rules plugins" << endl
                  << "   proofs         List proof plugins" << endl
+                 << "   printers       List proof printer plugins" << endl
                  << "   quit           Quits" << endl << endl;
 
             string command;
@@ -102,6 +107,10 @@ void entryMenu()
             else if(mainCommand == "proofs")
             {
                 listProofPlugins();
+            }
+            else if(mainCommand == "printers")
+            {
+                listProofPrinterPlugins();
             }
             else if(mainCommand == "quit")
             {
@@ -314,6 +323,12 @@ void createLogicalSystem(const QStringList &options)
         return;
     }
 
+    const auto proofPrinterPluginName = setupProofPrinterPlugin();
+    if(proofPrinterPluginName == "QUIT")
+    {
+        return;
+    }
+
     cout << endl;
     cout << "Write a type for the well formed formulas." << endl;
     string wffType;
@@ -323,12 +338,13 @@ void createLogicalSystem(const QStringList &options)
         return;
     }
 
-    manager.createLogicalSystem(name.data(),
-                                description.data(),
-                                inferenceRulesPluginNames,
-                                signaturePluginName,
-                                proofPluginName,
-                                Type(wffType.data()));
+    programAssistant.createLogicalSystem(name.data(),
+                                         description.data(),
+                                         inferenceRulesPluginNames,
+                                         signaturePluginName,
+                                         proofPluginName,
+                                         proofPrinterPluginName,
+                                         Type(wffType.data()));
     cout << endl << "Logical system \"" << name << "\" created!" << endl;
 }
 
@@ -472,7 +488,7 @@ void deleteLogicalSystem(const QStringList &options, const QStringList &position
 
     if(options.contains("s") || options.contains("silent"))
     {
-        manager.removeLogicalSystem(systemName);
+        programAssistant.removeLogicalSystem(systemName);
         cout << endl;
         cout << "Logical system \"" + systemName + "\" removed!" << endl;
     }
@@ -485,7 +501,7 @@ void deleteLogicalSystem(const QStringList &options, const QStringList &position
         getline(cin, command);
         if(command == "Y")
         {
-            manager.removeLogicalSystem(systemName);
+            programAssistant.removeLogicalSystem(systemName);
             cout << endl;
             cout << "\"" + systemName + "\" removed!" << endl;
         }
@@ -506,10 +522,10 @@ void loadLogicalSystem(const QStringList &options, const QStringList &positional
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto systemName = positionalArgs.first();
     checkLogicalSystemExists(systemName);
-    manager.loadLogicalSystem(systemName);
+    auto logicalSystemAsssitant = programAssistant.loadLogicalSystem(systemName);
     cout << endl;
-    cout << "Logical system \"" << manager.getActiveLogicalSystem()->getName() << "\" loaded." << endl;
-    logicalSystemMenu();
+    cout << "Logical system \"" << logicalSystemAsssitant.getActiveLogicalSystem().getName() << "\" loaded." << endl;
+    logicalSystemMenu(logicalSystemAsssitant);
 }
 
 void checkLogicalSystemExists(const QString &systemName)
@@ -524,7 +540,7 @@ void checkLogicalSystemExists(const QString &systemName)
     }
 }
 
-void logicalSystemMenu()
+void logicalSystemMenu(LogicalSystemAssistant &logicalSystemAssistant)
 {
     while(true)
     {
@@ -553,31 +569,31 @@ void logicalSystemMenu()
 
             if(mainCommand == "list")
             {
-                listTheories(options, positionalArgs);
+                listTheories(logicalSystemAssistant, options, positionalArgs);
             }
             else if(mainCommand == "new")
             {
-                createTheory(options);
+                createTheory(logicalSystemAssistant, options);
             }
             else if(mainCommand == "load")
             {
-                loadTheory(options, positionalArgs);
+                loadTheory(logicalSystemAssistant, options, positionalArgs);
             }
             else if(mainCommand == "delete")
             {
-                deleteTheory(options, positionalArgs);
+                deleteTheory(logicalSystemAssistant, options, positionalArgs);
             }
             else if(mainCommand == "rules")
             {
-                listCurrentlyLoadedInferenceRulesPlugins();
+                listCurrentlyLoadedInferenceRulesPlugins(logicalSystemAssistant);
             }
             else if(mainCommand == "signature")
             {
-                listCurrentlyLoadedSignaturePlugin();
+                listCurrentlyLoadedSignaturePlugin(logicalSystemAssistant);
             }
             else if(mainCommand == "proof")
             {
-                listCurrentlyLoadedProofPlugin();
+                listCurrentlyLoadedProofPlugin(logicalSystemAssistant);
             }
             else if(mainCommand == "tactic")
             {
@@ -593,7 +609,6 @@ void logicalSystemMenu()
             }
             else if(mainCommand == "unload")
             {
-                manager.unloadLogicalSystem();
                 return;
             }
             else
@@ -612,7 +627,7 @@ void logicalSystemMenu()
     }
 }
 
-void listTheories(const QStringList &options, const QStringList &positionalArgs)
+void listTheories(const LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "d", "description"}));
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
@@ -625,7 +640,7 @@ void listTheories(const QStringList &options, const QStringList &positionalArgs)
         return;
     }
 
-    const auto logicalSystemName = manager.getActiveLogicalSystem()->getName();
+    const auto logicalSystemName = logicalSystemAssistant.getActiveLogicalSystem().getName();
     auto records = StorageManager::retrieveTheoriesRecords(logicalSystemName);
 
     if(records.isEmpty())
@@ -664,7 +679,7 @@ void listTheories(const QStringList &options, const QStringList &positionalArgs)
     }
 }
 
-void createTheory(const QStringList &options)
+void createTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
 
@@ -695,12 +710,12 @@ void createTheory(const QStringList &options)
         return;
     }
 
-    const auto logicalSystemName = manager.getActiveLogicalSystem()->getName();
+    const auto logicalSystemName = logicalSystemAssistant.getActiveLogicalSystem().getName();
     const auto logicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(logicalSystemName);
     const auto signaturePluginName = logicalSystemPluginsRecord.getSignaturePluginName();
     auto signature = PluginManager::fetchPlugin<Signature>(StorageManager::signaturePluginPath(signaturePluginName));
     //Convert signature to SignatureCLIPlugin and setup!
-    TheoryBuilder builder(manager.getActiveLogicalSystem(),
+    TheoryBuilder builder(&logicalSystemAssistant.getActiveLogicalSystem(),
                           signature,
                           name.data(),
                           description.data());
@@ -708,7 +723,7 @@ void createTheory(const QStringList &options)
     //TODO setup formatters and string processors
 
     setupAxioms(builder);
-    manager.createTheory(builder, TheoryPluginsRecord());
+    logicalSystemAssistant.createTheory(builder, TheoryPluginsRecord());
 }
 
 QString setupSignaturePlugin()
@@ -842,7 +857,7 @@ void checkSetupAxiomsPositionalArgs(const QStringList &positionalArgs)
     }
 }
 
-void loadTheory(const QStringList &options, const QStringList &positionalArgs)
+void loadTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
@@ -855,14 +870,14 @@ void loadTheory(const QStringList &options, const QStringList &positionalArgs)
 
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto &theoryName = positionalArgs.first();
-    manager.loadTheory(theoryName);
+    auto theoryAssistant = logicalSystemAssistant.loadTheory(theoryName);
 
     cout << endl
          << "Theory " << theoryName << " loaded." << endl;
-    theoryMenu();
+    theoryMenu(theoryAssistant);
 }
 
-void deleteTheory(const QStringList &options, const QStringList &positionalArgs)
+void deleteTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "s", "silent"}));
 
@@ -878,7 +893,7 @@ void deleteTheory(const QStringList &options, const QStringList &positionalArgs)
     const auto &theoryName = positionalArgs.first();
     if(options.contains("s") || options.contains("silent"))
     {
-        manager.removeTheory(theoryName);
+        logicalSystemAssistant.removeTheory(theoryName);
         cout << endl
              << "Theory \"" << theoryName << "\" deleted." << endl;
     }
@@ -891,7 +906,7 @@ void deleteTheory(const QStringList &options, const QStringList &positionalArgs)
         getline(cin, command);
         if(command == "Y")
         {
-            manager.removeTheory(theoryName);
+            logicalSystemAssistant.removeTheory(theoryName);
             cout << endl
                  << "Theory \"" << theoryName << "\" deleted." << endl;
         }
@@ -922,7 +937,7 @@ void listPostProcessorsPlugins()
     outputOrderedPluginList(StorageManager::postProcessorPluginsList());
 }
 
-void theoryMenu()
+void theoryMenu(TheoryAssistant &theoryAssistant)
 {
     while(true)
     {
@@ -951,7 +966,7 @@ void theoryMenu()
             }
             else if(mainCommand == "add")
             {
-                theoryMenuAdd(options, positionalArgs);
+                theoryMenuAdd(theoryAssistant, options, positionalArgs);
             }
             else if(mainCommand == "remove")
             {
@@ -959,7 +974,7 @@ void theoryMenu()
             }
             else if(mainCommand == "load")
             {
-                loadProof(options, positionalArgs);
+                loadProof(theoryAssistant, options, positionalArgs);
             }
             else if(mainCommand == "setup")
             {
@@ -967,7 +982,6 @@ void theoryMenu()
             }
             else if(mainCommand == "unload")
             {
-                manager.unloadTheory();
                 return;
             }
             else
@@ -1011,11 +1025,11 @@ void theoryMenuList(const QStringList &options, const QStringList &positionalArg
     //TODO
     if(options.contains("a") || options.contains("axioms"))
     {
-        listCurrentTheoryAxioms();
+        //listCurrentTheoryAxioms();
     }
     else if(options.contains("r") || options.contains("rules"))
     {
-        listCurrentlyLoadedInferenceRulesPlugins();
+        //listCurrentlyLoadedInferenceRulesPlugins();
     }
     else if(options.contains("t") || options.contains("tactics"))
     {
@@ -1037,19 +1051,19 @@ void theoryMenuList(const QStringList &options, const QStringList &positionalArg
     }
 }
 
-void listCurrentlyLoadedInferenceRulesPlugins()
+void listCurrentlyLoadedInferenceRulesPlugins(const LogicalSystemAssistant &logicalSystemAssistant)
 {
-    const auto loadedLogicalSystemName = manager.getActiveLogicalSystem()->getName();
+    const auto loadedLogicalSystemName = logicalSystemAssistant.getActiveLogicalSystem().getName();
     const auto loadedLogicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(loadedLogicalSystemName);
     const auto loadedInferenceRulesPluginsNameList = loadedLogicalSystemPluginsRecord.getInferenceRulesNamesList();
     cout << endl << "Loaded Inference Rules Plugins List:" << endl;
     outputOrderedList(loadedInferenceRulesPluginsNameList);
 }
 
-void listCurrentTheoryAxioms()
+void listCurrentTheoryAxioms(const TheoryAssistant &theoryAssistant)
 {
-    const auto currentTheory = manager.getActiveTheory();
-    const auto axioms = currentTheory->getAxioms();
+    const auto &currentTheory = theoryAssistant.getActiveTheory();
+    const auto axioms = currentTheory.getAxioms();
     cout << endl;
     for(const auto &axiom : axioms)
     {
@@ -1057,7 +1071,7 @@ void listCurrentTheoryAxioms()
     }
 }
 
-void theoryMenuAdd(const QStringList &options, const QStringList &positionalArgs)
+void theoryMenuAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "p", "proof", "t", "tactic", "e", "pre", "o", "post"}));
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0}));
@@ -1077,11 +1091,11 @@ void theoryMenuAdd(const QStringList &options, const QStringList &positionalArgs
 
     if(options.contains("p") || options.contains("proof"))
     {
-        createProof();
+        createProof(theoryAssistant);
     }
 }
 
-void createProof()
+void createProof(TheoryAssistant &theoryAssistant)
 {
     cout << endl;
     cout << "Enter proof name:" << endl;
@@ -1110,23 +1124,23 @@ void createProof()
     cout << "   done        Done" << endl;
 
     QStringList premises;
-    setupProofPremises(premises);
+    setupProofPremises(theoryAssistant, premises);
 
     cout << endl;
     cout << "Enter proof conclusion:" << endl;
 
     QString conclusion;
-    setupProofConclusion(conclusion);
+    setupProofConclusion(theoryAssistant, conclusion);
 
-    manager.createProof(name, description, premises, conclusion);
+    theoryAssistant.createProof(name, description, premises, conclusion);
     cout << endl;
     cout << "Proof created!" << endl; //FIXME Fix conclusion message
 }
 
-void setupProofPremises(QStringList &premises)
+void setupProofPremises(TheoryAssistant &theoryAssistant, QStringList &premises)
 {
-    const auto theory = manager.getActiveTheory();
-    Parser formulaParser(theory->getSignature(), manager.getActiveLogicalSystem()->getWffType());
+    const auto &theory = theoryAssistant.getActiveTheory();
+    Parser formulaParser(theory.getSignature(), theoryAssistant.getActiveLogicalSystem().getWffType());
     while(true)
     {
         if(!premises.isEmpty())
@@ -1180,10 +1194,10 @@ void setupProofPremises(QStringList &premises)
     }
 }
 
-void setupProofConclusion(QString &conclusion)
+void setupProofConclusion(TheoryAssistant &theoryAssistant, QString &conclusion)
 {
-    const auto theory = manager.getActiveTheory();
-    Parser formulaParser(theory->getSignature(), manager.getActiveLogicalSystem()->getWffType());
+    const auto &theory = theoryAssistant.getActiveTheory();
+    Parser formulaParser(theory.getSignature(), theoryAssistant.getActiveLogicalSystem().getWffType());
     while(true)
     {
         string command;
@@ -1203,7 +1217,7 @@ void setupProofConclusion(QString &conclusion)
     }
 }
 
-void loadProof(const QStringList &options, const QStringList &positionalArgs)
+void loadProof(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
@@ -1220,17 +1234,12 @@ void loadProof(const QStringList &options, const QStringList &positionalArgs)
     if(options.contains("i") || options.contains("id"))
     {
         const auto id = positionalArgs.first().toUInt();
-        auto assistant = manager.loadProof(id);
-        proofAssistantMenu(assistant);
+        auto assistant = theoryAssistant.loadProof(id);
+        proofAssistantMenu(theoryAssistant, assistant);
     }
-    else
-    {
-
-    }
-
 }
 
-void proofAssistantMenu(ProofAssistant &assistant)
+void proofAssistantMenu(TheoryAssistant &theoryAssistant, ProofAssistant &assistant)
 {
     //TODO
     cout << endl;
@@ -1245,7 +1254,7 @@ void proofAssistantMenu(ProofAssistant &assistant)
         {
             const auto lineNumber = index + 1;
             cout << lineNumber << ". "
-                 << proof.printLineOfProof(lineNumber) << ' '
+                 //<< proof.printLineOfProof(lineNumber) << ' '
                  << proof.getLineOfProof(lineNumber).getJustification().getInferenceRuleCallCommand()
                  << proof.getLineOfProof(lineNumber).getJustification().getArgumentList() << endl;
         }
@@ -1273,7 +1282,7 @@ void proofAssistantMenu(ProofAssistant &assistant)
                 {
                     cout << endl;
                     cout << "Proof finished!" << endl;
-                    manager.saveProof(assistant);
+                    theoryAssistant.saveProof(assistant);
                     return;
                 }
             }
@@ -1329,27 +1338,27 @@ void checkProofPluginExists(const QString &pluginName)
     if(!StorageManager::proofPluginExists(pluginName))
     {
         QString errorMsg;
-        errorMsg += "There is no signature plugin named \"";
+        errorMsg += "There is no proof plugin named \"";
         errorMsg += pluginName;
         errorMsg += "\".";
         throw invalid_argument(errorMsg.toStdString());
     }
 }
 
-void listCurrentlyLoadedSignaturePlugin()
+void listCurrentlyLoadedSignaturePlugin(const LogicalSystemAssistant &logicalSystemAssistant)
 {
     cout << endl;
     cout << "Currently Loaded Signature Plugin:" << endl;
-    const auto logicalSystemName = manager.getActiveLogicalSystem()->getName();
+    const auto logicalSystemName = logicalSystemAssistant.getActiveLogicalSystem().getName();
     const auto logicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(logicalSystemName);
     cout << logicalSystemPluginsRecord.getSignaturePluginName() << endl;
 }
 
-void listCurrentlyLoadedProofPlugin()
+void listCurrentlyLoadedProofPlugin(const LogicalSystemAssistant &logicalSystemAssistant)
 {
     cout << endl;
     cout << "Currently Loaded Proof Plugin:" << endl;
-    const auto logicalSystemName = manager.getActiveLogicalSystem()->getName();
+    const auto logicalSystemName = logicalSystemAssistant.getActiveLogicalSystem().getName();
     const auto logicalSystemPluginsRecord = StorageManager::retrieveLogicalSystemPluginsRecord(logicalSystemName);
     cout << logicalSystemPluginsRecord.getProofPluginName() << endl;
 }
@@ -1372,5 +1381,56 @@ void outputOrderedList(const QStringList &list)
     {
         cout << entryCount << ". " << entry << endl;
         entryCount++;
+    }
+}
+
+QString setupProofPrinterPlugin()
+{
+    cout << endl
+         << "Choose Proof Printer Plugin:" << endl;
+    listProofPrinterPlugins();
+
+    while(true)
+    {
+        try
+        {
+            string proofPrinterPluginName;
+            getline(cin, proofPrinterPluginName);
+            if(proofPrinterPluginName == "QUIT")
+            {
+                return "QUIT";
+            }
+
+            QString wrappedName(proofPrinterPluginName.data());
+
+            checkProofPrinterPluginExists(wrappedName);
+            return wrappedName;
+        }
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+        catch(const runtime_error &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+    }
+}
+
+void listProofPrinterPlugins()
+{
+    cout << endl << "Proof Printer Plugins List:" << endl;
+    outputOrderedPluginList(StorageManager::proofPrinterPluginsList());
+}
+
+void checkProofPrinterPluginExists(const QString &pluginName)
+{
+    if(!StorageManager::proofPrinterPluginExists(pluginName))
+    {
+        QString errorMsg;
+        errorMsg += "There is no proof printer plugin named \"";
+        errorMsg += pluginName;
+        errorMsg += "\".";
+        throw invalid_argument(errorMsg.toStdString());
     }
 }
