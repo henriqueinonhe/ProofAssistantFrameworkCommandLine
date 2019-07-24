@@ -14,6 +14,8 @@
 #include "theoryassistant.h"
 #include "logicalsystempluginsrecord.h"
 #include "lineofproof.h"
+#include "proofwithhypothesiscliprinter.h"
+#include "proofprintercliplugin.h"
 
 ProgramAssistant programAssistant;
 CommandLineParser parser;
@@ -323,11 +325,7 @@ void createLogicalSystem(const QStringList &options)
         return;
     }
 
-    const auto proofPrinterPluginName = setupProofPrinterPlugin();
-    if(proofPrinterPluginName == "QUIT")
-    {
-        return;
-    }
+
 
     cout << endl;
     cout << "Write a type for the well formed formulas." << endl;
@@ -343,7 +341,6 @@ void createLogicalSystem(const QStringList &options)
                                          inferenceRulesPluginNames,
                                          signaturePluginName,
                                          proofPluginName,
-                                         proofPrinterPluginName,
                                          Type(wffType.data()));
     cout << endl << "Logical system \"" << name << "\" created!" << endl;
 }
@@ -720,10 +717,16 @@ void createTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringL
                           name.data(),
                           description.data());
 
+    const auto proofPrinterPluginName = setupProofPrinterPlugin();
+    if(proofPrinterPluginName == "QUIT")
+    {
+        return;
+    }
+
     //TODO setup formatters and string processors
 
     setupAxioms(builder);
-    logicalSystemAssistant.createTheory(builder, TheoryPluginsRecord());
+    logicalSystemAssistant.createTheory(builder, TheoryPluginsRecord(proofPrinterPluginName));
 }
 
 QString setupSignaturePlugin()
@@ -1247,17 +1250,11 @@ void proofAssistantMenu(TheoryAssistant &theoryAssistant, ProofAssistant &assist
 
     while(true)
     {
-        cout << endl;
         const auto &proof = assistant.getProof();
-        const auto linesOfProofSize = proof.getLinesOfProof().size();
-        for(auto index = 0; index < linesOfProofSize; index++)
-        {
-            const auto lineNumber = index + 1;
-            cout << lineNumber << ". "
-                 //<< proof.printLineOfProof(lineNumber) << ' '
-                 << proof.getLineOfProof(lineNumber).getJustification().getInferenceRuleCallCommand()
-                 << proof.getLineOfProof(lineNumber).getJustification().getArgumentList() << endl;
-        }
+        const auto &proofPrinter = dynamic_cast<const ProofPrinterCLIPlugin &>(theoryAssistant.getProofPrinter());
+        auto stringnizedProof = proofPrinter.printProof(theoryAssistant.getActiveTheory().getPostFormatter(), proof);
+        cout << endl;
+        cout << stringnizedProof;
 
         try
         {

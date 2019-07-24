@@ -14,7 +14,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-LIBS = -L"C:/Users/Henrique/Documents/Qt Projects/Static Libraries/Libs/" -llibProofAssistantFramework
+LIBS += -L"C:/Users/Henrique/Documents/Qt Projects/Static Libraries/Libs/" -llibPropositionalLogic
+LIBS += -L"C:/Users/Henrique/Documents/Qt Projects/Static Libraries/Libs/" -llibProofAssistantFramework
 
 INCLUDEPATH += ../ProofAssistantFramework \
                ../Language/Parser \
@@ -29,10 +30,6 @@ INCLUDEPATH += ../ProofAssistantFramework \
 
 SOURCES += \
         ../CommandLineParser/commandlineparser.cpp \
-        ../PropositionalLogicPlugins/hypothesismanager.cpp \
-        ../PropositionalLogicPlugins/hypothesissection.cpp \
-        ../PropositionalLogicPlugins/proofwithhypothesis.cpp \
-        ../PropositionalLogicPlugins/propositionalutils.cpp \
         functions.cpp \
         main.cpp \
         proofprintercliplugin.cpp \
@@ -47,10 +44,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     ../CommandLineParser/commandlineparser.h \
-    ../PropositionalLogicPlugins/hypothesismanager.h \
-    ../PropositionalLogicPlugins/hypothesissection.h \
-    ../PropositionalLogicPlugins/proofwithhypothesis.h \
-    ../PropositionalLogicPlugins/propositionalutils.h \
     catch.hpp \
     functions.h \
     proofprintercliplugin.h \

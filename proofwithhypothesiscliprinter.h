@@ -8,7 +8,12 @@ class ProofWithHypothesisCLIPrinter : public ProofPrinter, public ProofPrinterCL
 {
 public:
     ProofWithHypothesisCLIPrinter() = default;
-    QString printProof(const StringProcessorManager &postFormatter, const Proof &proof) override;
+    ProofWithHypothesisCLIPrinter(QDataStream &stream);
+    QString printProof(const StringProcessorManager &postFormatter, const Proof &proof) const override;
+
+protected:
+    void serialize(QDataStream &) const override;
+    void deserialize(QDataStream &) override;
 };
 
 #endif // PROOFWITHHYPOTHESISCLIPRINTER_H

@@ -10,7 +10,7 @@ class ProofPrinterCLIPlugin
 public:
     ProofPrinterCLIPlugin();
 
-    virtual QString printProof(const StringProcessorManager &postFormatter, const Proof &proof) = 0;
+    virtual QString printProof(const StringProcessorManager &postFormatter, const Proof &proof) const = 0;
 };
 
 #endif // PROOFPRINTERCLIPLUGIN_H
