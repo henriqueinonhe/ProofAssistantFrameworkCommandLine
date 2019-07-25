@@ -14,10 +14,12 @@ QString ProofWithHypothesisCLIPrinter::printProof(const StringProcessorManager &
     QString output;
     auto lineNumber = 1;
     const auto linesOfProof = proof.getLinesOfProof();
+    const auto lastLineNumber = linesOfProof.size();
     for(const auto lineOfProof : linesOfProof)
     {
-        output += lineNumber;
+        output += QString::number(lineNumber);
         output += ". ";
+        output += getSpacingBeforeFormula(lastLineNumber, lineNumber);
         const auto hypothesisDepth = castProof.accessHypothesisManager().hypothesisDepth(lineNumber);
         for(unsigned int hypothesisDepthCounter = 0; hypothesisDepthCounter < hypothesisDepth; hypothesisDepthCounter++)
         {
@@ -34,6 +36,7 @@ QString ProofWithHypothesisCLIPrinter::printProof(const StringProcessorManager &
             output += " ";
         }
         output += "\n";
+        lineNumber++;
     }
     return output;
 }
@@ -46,4 +49,17 @@ void ProofWithHypothesisCLIPrinter::serialize(QDataStream &) const
 void ProofWithHypothesisCLIPrinter::deserialize(QDataStream &)
 {
 
+}
+
+QString ProofWithHypothesisCLIPrinter::getSpacingBeforeFormula(const unsigned int lastLineNumber, const unsigned int currentLineNumber) const
+{
+    const auto stringnizedLastLineNumber = QString::number(lastLineNumber);
+    const auto stringnizedCurrentLineNumber = QString::number(currentLineNumber);
+    const auto spaceDifference = stringnizedLastLineNumber.size() - stringnizedCurrentLineNumber.size();
+    QString spacing;
+    for(auto i = 0; i < spaceDifference; i++)
+    {
+        spacing += " ";
+    }
+    return spacing;
 }

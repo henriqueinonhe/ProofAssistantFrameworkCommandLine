@@ -48,6 +48,13 @@ void createProof(TheoryAssistant &theoryAssistant);
 void setupProofPremises(TheoryAssistant &theoryAssistant, QStringList &premises);
 void setupProofConclusion(TheoryAssistant &theoryAssistant, QString &conclusion);
 void loadProof(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
+void setupPreFormatter(TheoryAssistant &theoryAssistant);
+void preFormatterList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
+void preFormatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
+void preFormatterRemove(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
+void preFormatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
+void preFormatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
+void preProcessorSetup(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
 
 /* Listing */
 
@@ -71,6 +78,6 @@ void listPostProcessorsPlugins();
 void listCurrentlyLoadedInferenceRulesPlugins(const LogicalSystemAssistant &logicalSystemAssistant);
 void listCurrentlyLoadedSignaturePlugin(const LogicalSystemAssistant &logicalSystemAssistant);
 void listCurrentlyLoadedProofPlugin(const LogicalSystemAssistant &logicalSystemAssistant);
-
+void listCurrentlyLoadedPreProcessors(const TheoryAssistant &theoryAssistant);
 
 #endif // FUNCTIONS_H

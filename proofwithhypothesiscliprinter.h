@@ -4,7 +4,7 @@
 #include "proofprintercliplugin.h"
 #include "proofprinter.h"
 
-class ProofWithHypothesisCLIPrinter : public ProofPrinter, public ProofPrinterCLIPlugin
+class ProofWithHypothesisCLIPrinter final : public ProofPrinter, public ProofPrinterCLIPlugin
 {
 public:
     ProofWithHypothesisCLIPrinter() = default;
@@ -14,6 +14,9 @@ public:
 protected:
     void serialize(QDataStream &) const override;
     void deserialize(QDataStream &) override;
+
+private:
+    QString getSpacingBeforeFormula(const unsigned int lastLineNumber, const unsigned int currentLineNumber) const;
 };
 
 #endif // PROOFWITHHYPOTHESISCLIPRINTER_H

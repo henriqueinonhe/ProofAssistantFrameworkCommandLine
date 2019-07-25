@@ -1431,3 +1431,203 @@ void checkProofPrinterPluginExists(const QString &pluginName)
         throw invalid_argument(errorMsg.toStdString());
     }
 }
+
+void setupPreFormatter(TheoryAssistant &theoryAssistant)
+{
+    cout << endl;
+    cout << "Pre Formatter Setup:" << endl;
+    cout << "   list            List pre processors" << endl;
+    cout << "   add             Add pre processor" << endl;
+    cout << "   remove          Remove pre processor" << endl;
+    cout << "   on              Turn pre processor on" << endl;
+    cout << "   off             Turn pre processor off" << endl;
+    cout << "   setup           Setup pre processor" << endl;
+    cout << "   quit            Quit pre formatter setup" << endl;
+
+    while(true)
+    {
+        string command;
+        getline(cin, command);
+        parser.parse(command);
+        const QString mainCommand = parser.getMainCommand();
+        const QStringList options = parser.getOptions();
+        const QStringList positionalArgs = parser.getPositionalArgs();
+
+        try
+        {
+            if(mainCommand == "list")
+            {
+                preFormatterList(theoryAssistant, options, positionalArgs);
+            }
+            else if(mainCommand == "add")
+            {
+                preFormatterAdd(theoryAssistant, options, positionalArgs);
+            }
+            else if(mainCommand == "remove")
+            {
+                preFormatterRemove(theoryAssistant, options, positionalArgs);
+            }
+            else if(mainCommand == "on")
+            {
+                preFormatterTurnOn(theoryAssistant, options, positionalArgs);
+            }
+            else if(mainCommand == "off")
+            {
+                preFormatterTurnOff(theoryAssistant, options, positionalArgs);
+            }
+            else if(mainCommand == "setup")
+            {
+                preProcessorSetup(theoryAssistant, options, positionalArgs);
+            }
+            else if(mainCommand == "quit")
+            {
+                return;
+            }
+            else
+            {
+                invalidCommand(mainCommand);
+            }
+        }
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+        catch(const runtime_error &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+    }
+}
+
+void preFormatterList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"h", "help", "l", "loaded", "p", "plugins"}));
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: list [<options>]" << endl;
+        cout << "   -l, --loaded            List loaded pre processors only" << endl;
+        cout << "   -p, --plugins           List pre processor plugins only" << endl;
+        return;
+    }
+
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0}));
+
+    if(options.contains("l") || options.contains("loaded"))
+    {
+        listCurrentlyLoadedPreProcessors(theoryAssistant);
+    }
+    else if(options.contains("p") || options.contains("plugins"))
+    {
+        listPreProcessorPlugins();
+    }
+    else
+    {
+        listPreProcessorPlugins();
+        listCurrentlyLoadedPreProcessors(theoryAssistant);
+    }
+}
+
+void listCurrentlyLoadedPreProcessors(const TheoryAssistant &theoryAssistant)
+{
+    auto processorList = theoryAssistant.listLoadedPreProcessors();
+    outputOrderedList(processorList);
+}
+
+void preFormatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: add [<options>] <processor-name-or-index>" << endl;
+        cout << "   -i, --index            Add processor by index" << endl;
+        return;
+    }
+
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+
+    if(options.contains("i") || options.contains("index"))
+    {
+        const auto processorNameList = StorageManager::preProcessorPluginsList();
+        const auto processorIndex = positionalArgs.first().toInt();
+        if(processorIndex >= processorNameList.size())
+        {
+            throw invalid_argument("There is no processor plugin associated with this index!");
+        }
+
+        const auto dotDllCharacterSpan = 4;
+        const auto processorName = processorNameList[processorIndex].chopped(dotDllCharacterSpan);
+        theoryAssistant.addPreProcessorPlugin(processorName);
+    }
+    else
+    {
+        const auto processorName = positionalArgs.first();
+        theoryAssistant.addPreProcessorPlugin(processorName);
+    }
+}
+
+void preFormatterRemove(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: remove [<options>] <processor-index>" << endl;
+        return;
+    }
+
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+
+    if(options.contains("i") || options.contains("index"))
+    {
+        const auto processorIndex = positionalArgs.first().toInt();
+        theoryAssistant.removePreProcessorPlugin(processorIndex);
+    }
+}
+
+void preFormatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: on <processor-index>" << endl;
+        return;
+    }
+
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    const auto processorIndex = positionalArgs.first().toInt();
+    theoryAssistant.turnOnPreProcessorPlugin(processorIndex);
+}
+
+void preFormatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: off <processor-index>" << endl;
+        return;
+    }
+
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    const auto processorIndex = positionalArgs.first().toInt();
+    theoryAssistant.turnOffPreProcessorPlugin(processorIndex);
+}
+
+void preProcessorSetup(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+{
+    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+
+    if(options.contains("h") || options.contains("help"))
+    {
+        cout << endl;
+        cout << "usage: setup <"
+    }
+}
