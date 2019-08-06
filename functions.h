@@ -11,6 +11,7 @@ class TheoryBuilder;
 class LogicalSystemAssistant;
 class TheoryAssistant;
 class ProofAssistant;
+enum class StringProcessorRole;
 
 /* Menu */
 void entryMenu();
@@ -49,12 +50,13 @@ void setupProofPremises(TheoryAssistant &theoryAssistant, QStringList &premises)
 void setupProofConclusion(TheoryAssistant &theoryAssistant, QString &conclusion);
 void loadProof(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
 void setupPreFormatter(TheoryAssistant &theoryAssistant);
-void preFormatterList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
-void preFormatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
-void preFormatterRemove(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
-void preFormatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
-void preFormatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
-void preProcessorSetup(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
+void setupPostFormatter(TheoryAssistant &theoryAssistant);
+void formatterList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role);
+void formatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role);
+void formatterRemove(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role);
+void formatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role);
+void formatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role);
+void processorSetup(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role);
 
 /* Listing */
 
@@ -79,5 +81,13 @@ void listCurrentlyLoadedInferenceRulesPlugins(const LogicalSystemAssistant &logi
 void listCurrentlyLoadedSignaturePlugin(const LogicalSystemAssistant &logicalSystemAssistant);
 void listCurrentlyLoadedProofPlugin(const LogicalSystemAssistant &logicalSystemAssistant);
 void listCurrentlyLoadedPreProcessors(const TheoryAssistant &theoryAssistant);
+void listCurrentlyLoadedPostProcessors(const TheoryAssistant &theoryAssistant);
+
+/* Enums */
+enum class StringProcessorRole
+{
+    PreProcessor,
+    PostProcessor
+};
 
 #endif // FUNCTIONS_H

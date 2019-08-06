@@ -14,6 +14,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+LIBS += -L"C:/Users/Henrique/Documents/Qt Projects/Static Libraries/Libs/" -llibPropositionalLogic
+LIBS += -L"C:/Users/Henrique/Documents/Qt Projects/Static Libraries/Libs/" -llibProofAssistantFramework
+
+PRE_TARGETDEPS += "C:/Users/Henrique/Documents/Qt Projects/Static Libraries/Libs/libPropositionalLogic.a"
+PRE_TARGETDEPS += "C:/Users/Henrique/Documents/Qt Projects/Static Libraries/Libs/libProofAssistantFramework.a"
+
 INCLUDEPATH += ../ProofAssistantFramework \
                ../Language/Parser \
                ../Language/Type \

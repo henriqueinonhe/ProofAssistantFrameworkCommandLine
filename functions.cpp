@@ -16,6 +16,7 @@
 #include "lineofproof.h"
 #include "proofwithhypothesiscliprinter.h"
 #include "proofprintercliplugin.h"
+#include "stringprocessorcliplugin.h"
 
 ProgramAssistant programAssistant;
 CommandLineParser parser;
@@ -1457,27 +1458,27 @@ void setupPreFormatter(TheoryAssistant &theoryAssistant)
         {
             if(mainCommand == "list")
             {
-                preFormatterList(theoryAssistant, options, positionalArgs);
+                formatterList(theoryAssistant, options, positionalArgs, StringProcessorRole::PreProcessor);
             }
             else if(mainCommand == "add")
             {
-                preFormatterAdd(theoryAssistant, options, positionalArgs);
+                formatterAdd(theoryAssistant, options, positionalArgs, StringProcessorRole::PreProcessor);
             }
             else if(mainCommand == "remove")
             {
-                preFormatterRemove(theoryAssistant, options, positionalArgs);
+                formatterRemove(theoryAssistant, options, positionalArgs, StringProcessorRole::PreProcessor);
             }
             else if(mainCommand == "on")
             {
-                preFormatterTurnOn(theoryAssistant, options, positionalArgs);
+                formatterTurnOn(theoryAssistant, options, positionalArgs, StringProcessorRole::PreProcessor);
             }
             else if(mainCommand == "off")
             {
-                preFormatterTurnOff(theoryAssistant, options, positionalArgs);
+                formatterTurnOff(theoryAssistant, options, positionalArgs, StringProcessorRole::PreProcessor);
             }
             else if(mainCommand == "setup")
             {
-                preProcessorSetup(theoryAssistant, options, positionalArgs);
+                processorSetup(theoryAssistant, options, positionalArgs, StringProcessorRole::PreProcessor);
             }
             else if(mainCommand == "quit")
             {
@@ -1499,7 +1500,7 @@ void setupPreFormatter(TheoryAssistant &theoryAssistant)
     }
 }
 
-void preFormatterList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+void formatterList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "l", "loaded", "p", "plugins"}));
 
@@ -1507,8 +1508,8 @@ void preFormatterList(const TheoryAssistant &theoryAssistant, const QStringList 
     {
         cout << endl;
         cout << "usage: list [<options>]" << endl;
-        cout << "   -l, --loaded            List loaded pre processors only" << endl;
-        cout << "   -p, --plugins           List pre processor plugins only" << endl;
+        cout << "   -l, --loaded            List loaded processors only" << endl;
+        cout << "   -p, --plugins           List processor plugins only" << endl;
         return;
     }
 
@@ -1516,16 +1517,38 @@ void preFormatterList(const TheoryAssistant &theoryAssistant, const QStringList 
 
     if(options.contains("l") || options.contains("loaded"))
     {
-        listCurrentlyLoadedPreProcessors(theoryAssistant);
+        if(role == StringProcessorRole::PreProcessor)
+        {
+            listCurrentlyLoadedPreProcessors(theoryAssistant);
+        }
+        else
+        {
+            listCurrentlyLoadedPostProcessors(theoryAssistant);
+        }
     }
     else if(options.contains("p") || options.contains("plugins"))
     {
-        listPreProcessorPlugins();
+        if(role == StringProcessorRole::PreProcessor)
+        {
+            listPreProcessorPlugins();
+        }
+        else
+        {
+            listPostProcessorsPlugins();
+        }
     }
     else
     {
-        listPreProcessorPlugins();
-        listCurrentlyLoadedPreProcessors(theoryAssistant);
+        if(role == StringProcessorRole::PreProcessor)
+        {
+            listPreProcessorPlugins();
+            listCurrentlyLoadedPreProcessors(theoryAssistant);
+        }
+        else
+        {
+            listPostProcessorsPlugins();
+            listCurrentlyLoadedPostProcessors(theoryAssistant);
+        }
     }
 }
 
@@ -1535,7 +1558,7 @@ void listCurrentlyLoadedPreProcessors(const TheoryAssistant &theoryAssistant)
     outputOrderedList(processorList);
 }
 
-void preFormatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+void formatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
 
@@ -1551,7 +1574,16 @@ void preFormatterAdd(TheoryAssistant &theoryAssistant, const QStringList &option
 
     if(options.contains("i") || options.contains("index"))
     {
-        const auto processorNameList = StorageManager::preProcessorPluginsList();
+        QStringList processorNameList;
+        if(role == StringProcessorRole::PreProcessor)
+        {
+            processorNameList = StorageManager::preProcessorPluginsList();
+        }
+        else
+        {
+            processorNameList = StorageManager::postProcessorPluginsList();
+        }
+
         const auto processorIndex = positionalArgs.first().toInt();
         if(processorIndex >= processorNameList.size())
         {
@@ -1560,16 +1592,31 @@ void preFormatterAdd(TheoryAssistant &theoryAssistant, const QStringList &option
 
         const auto dotDllCharacterSpan = 4;
         const auto processorName = processorNameList[processorIndex].chopped(dotDllCharacterSpan);
-        theoryAssistant.addPreProcessorPlugin(processorName);
+
+        if(role == StringProcessorRole::PreProcessor)
+        {
+            theoryAssistant.addPreProcessorPlugin(processorName);
+        }
+        else
+        {
+            theoryAssistant.addPostProcessorPlugin(processorName);
+        }
     }
     else
     {
         const auto processorName = positionalArgs.first();
-        theoryAssistant.addPreProcessorPlugin(processorName);
+        if(role == StringProcessorRole::PreProcessor)
+        {
+            theoryAssistant.addPreProcessorPlugin(processorName);
+        }
+        else
+        {
+            theoryAssistant.addPostProcessorPlugin(processorName);
+        }
     }
 }
 
-void preFormatterRemove(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+void formatterRemove(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
@@ -1585,11 +1632,18 @@ void preFormatterRemove(TheoryAssistant &theoryAssistant, const QStringList &opt
     if(options.contains("i") || options.contains("index"))
     {
         const auto processorIndex = positionalArgs.first().toInt();
-        theoryAssistant.removePreProcessorPlugin(processorIndex);
+        if(role == StringProcessorRole::PreProcessor)
+        {
+            theoryAssistant.removePreProcessorPlugin(processorIndex);
+        }
+        else
+        {
+            theoryAssistant.removePostProcessorPlugin(processorIndex);
+        }
     }
 }
 
-void preFormatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+void formatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
@@ -1602,10 +1656,17 @@ void preFormatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &opt
 
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto processorIndex = positionalArgs.first().toInt();
-    theoryAssistant.turnOnPreProcessorPlugin(processorIndex);
+    if(role == StringProcessorRole::PreProcessor)
+    {
+        theoryAssistant.turnOnPreProcessorPlugin(processorIndex);
+    }
+    else
+    {
+        theoryAssistant.turnOnPostProcessorPlugin(processorIndex);
+    }
 }
 
-void preFormatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+void formatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
@@ -1618,16 +1679,110 @@ void preFormatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &op
 
     checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto processorIndex = positionalArgs.first().toInt();
-    theoryAssistant.turnOffPreProcessorPlugin(processorIndex);
+    if(role == StringProcessorRole::PreProcessor)
+    {
+        theoryAssistant.turnOffPreProcessorPlugin(processorIndex);
+    }
+    else
+    {
+        theoryAssistant.turnOffPostProcessorPlugin(processorIndex);
+    }
 }
 
-void preProcessorSetup(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
+void processorSetup(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
     checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
         cout << endl;
-        cout << "usage: setup <"
+        cout << "usage: setup <processor-index>" << endl;
+        return;
     }
+
+    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    const auto processorIndex = positionalArgs.first().toInt();
+    if(role == StringProcessorRole::PreProcessor)
+    {
+        auto &castProcessor = dynamic_cast<StringProcessorCLIPlugin &>(theoryAssistant.accessPreProcessorPlugin(processorIndex));
+        castProcessor.setup();
+    }
+    else
+    {
+        auto &castProcessor = dynamic_cast<StringProcessorCLIPlugin &>(theoryAssistant.accessPostProcessorPlugin(processorIndex));
+        castProcessor.setup();
+    }
+}
+
+void setupPostFormatter(TheoryAssistant &theoryAssistant)
+{
+    cout << endl;
+    cout << "Post Formatter Setup:" << endl;
+    cout << "   list            List post processors" << endl;
+    cout << "   add             Add post processor" << endl;
+    cout << "   remove          Remove post processor" << endl;
+    cout << "   on              Turn post processor on" << endl;
+    cout << "   off             Turn post processor off" << endl;
+    cout << "   setup           Setup post processor" << endl;
+    cout << "   quit            Quit post formatter setup" << endl;
+
+    while(true)
+    {
+        string command;
+        getline(cin, command);
+        parser.parse(command);
+        const QString mainCommand = parser.getMainCommand();
+        const QStringList options = parser.getOptions();
+        const QStringList positionalArgs = parser.getPositionalArgs();
+
+        try
+        {
+            if(mainCommand == "list")
+            {
+                formatterList(theoryAssistant, options, positionalArgs, StringProcessorRole::PostProcessor);
+            }
+            else if(mainCommand == "add")
+            {
+                formatterAdd(theoryAssistant, options, positionalArgs, StringProcessorRole::PostProcessor);
+            }
+            else if(mainCommand == "remove")
+            {
+                formatterRemove(theoryAssistant, options, positionalArgs, StringProcessorRole::PostProcessor);
+            }
+            else if(mainCommand == "on")
+            {
+                formatterTurnOn(theoryAssistant, options, positionalArgs, StringProcessorRole::PostProcessor);
+            }
+            else if(mainCommand == "off")
+            {
+                formatterTurnOff(theoryAssistant, options, positionalArgs, StringProcessorRole::PostProcessor);
+            }
+            else if(mainCommand == "setup")
+            {
+                processorSetup(theoryAssistant, options, positionalArgs, StringProcessorRole::PostProcessor);
+            }
+            else if(mainCommand == "quit")
+            {
+                return;
+            }
+            else
+            {
+                invalidCommand(mainCommand);
+            }
+        }
+        catch(const invalid_argument &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+        catch(const runtime_error &e)
+        {
+            cerr << endl << e.what() << endl;
+        }
+    }
+}
+
+void listCurrentlyLoadedPostProcessors(const TheoryAssistant &theoryAssistant)
+{
+    auto processorList = theoryAssistant.listLoadedPreProcessors();
+    outputOrderedList(processorList);
 }
