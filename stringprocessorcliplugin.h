@@ -1,9 +1,7 @@
 #ifndef STRINGPROCESSORCLIPLUGIN_H
 #define STRINGPROCESSORCLIPLUGIN_H
 
-#include "stringprocessor.h"
-
-class StringProcessorCLIPlugin : public StringProcessor
+class StringProcessorCLIPlugin
 {
 public:
 

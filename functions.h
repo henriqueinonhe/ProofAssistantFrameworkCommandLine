@@ -24,8 +24,7 @@ void createRootDir();
 void invalidCommand(const QString &string);
 std::ostream &operator <<(std::ostream &stream, const QString &string);
 std::ostream &operator <<(std::ostream &stream, const QStringList &list);
-void checkOptionsAdmissibility(const QStringList &options, const QStringList &admissibleOptions);
-void checkPositionalArgumentsExpectedNumber(const QStringList &positionalArgs, const QVector<int> &expectedNumbers);
+
 template <class T> QVector<T> filterRecords(const QString &name, const QVector<T> &records);
 void createLogicalSystem(const QStringList &options);
 QStringList setupInferenceRulesPlugins();
@@ -43,7 +42,7 @@ void setupAxioms(TheoryBuilder &builder);
 void checkSetupAxiomsPositionalArgs(const QStringList &positionalArgs);
 void loadTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs);
 void deleteTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs);
-void theoryMenuList(const QStringList &options, const QStringList &positionalArgs);
+void theoryMenuList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
 void theoryMenuAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs);
 void createProof(TheoryAssistant &theoryAssistant);
 void setupProofPremises(TheoryAssistant &theoryAssistant, QStringList &premises);

@@ -33,6 +33,7 @@ INCLUDEPATH += ../ProofAssistantFramework \
 
 SOURCES += \
         ../CommandLineParser/commandlineparser.cpp \
+        cliauxiliaryfunctions.cpp \
         functions.cpp \
         main.cpp \
         proofprintercliplugin.cpp \
@@ -48,6 +49,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     ../CommandLineParser/commandlineparser.h \
     catch.hpp \
+    cliauxiliaryfunctions.h \
     functions.h \
     proofprintercliplugin.h \
     proofwithhypothesiscliprinter.h \

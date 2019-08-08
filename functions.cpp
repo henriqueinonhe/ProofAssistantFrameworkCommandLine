@@ -17,6 +17,7 @@
 #include "proofwithhypothesiscliprinter.h"
 #include "proofprintercliplugin.h"
 #include "stringprocessorcliplugin.h"
+#include "cliauxiliaryfunctions.h"
 
 ProgramAssistant programAssistant;
 CommandLineParser parser;
@@ -170,7 +171,7 @@ void listInferenceRulePlugins()
 void listLogicalSystems(const QStringList &options, const QStringList &positionalArgs)
 {
     const QStringList admissibleOptions({"h", "help", "d", "description"});
-    checkOptionsAdmissibility(options, admissibleOptions);
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, admissibleOptions);
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -180,7 +181,7 @@ void listLogicalSystems(const QStringList &options, const QStringList &positiona
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
     auto records = StorageManager::retrieveLogicalSystemsRecords();
     if(records.isEmpty())
     {
@@ -221,49 +222,6 @@ void listLogicalSystems(const QStringList &options, const QStringList &positiona
     }
 }
 
-void checkOptionsAdmissibility(const QStringList &options, const QStringList &admissibleOptions)
-{
-    for(const auto &option : options)
-    {
-        auto isAdmissible = false;
-        for(const auto &admissibleOption : admissibleOptions)
-        {
-            if(option == admissibleOption)
-            {
-                isAdmissible = true;
-                break;
-            }
-        }
-        if(!isAdmissible)
-        {
-            QString errorMsg;
-            errorMsg += "\"";
-            errorMsg += option;
-            errorMsg += "\" is not an admissible option.";
-            throw invalid_argument(errorMsg.toStdString());
-        }
-    }
-}
-
-void checkPositionalArgumentsExpectedNumber(const QStringList &positionalArgs, const QVector<int> &expectedNumbers)
-{
-    const auto providedArgumentsNumber = positionalArgs.size();
-    if(!expectedNumbers.contains(providedArgumentsNumber))
-    {
-        QString errorMsg;
-        for(auto expectedNumber = expectedNumbers.begin(); expectedNumber != expectedNumbers.end() - 1; expectedNumber++)
-        {
-            errorMsg += QString::number(*expectedNumber);
-            errorMsg += ", or ";
-        }
-        errorMsg += QString::number(expectedNumbers.last());
-        errorMsg += " arguments were expected, but ";
-        errorMsg += QString::number(positionalArgs.size());
-        errorMsg += " were provided.";
-        throw invalid_argument(errorMsg.toStdString());
-    }
-}
-
 template <class T> QVector<T> filterRecords(const QString &name, const QVector<T> &records)
 {
     QVector<T> filteredRecords;
@@ -279,7 +237,7 @@ template <class T> QVector<T> filterRecords(const QString &name, const QVector<T
 
 void createLogicalSystem(const QStringList &options)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -372,8 +330,8 @@ QStringList setupInferenceRulesPlugins()
             const auto mainCommand = parser.getMainCommand();
             const auto options = parser.getOptions();
             const auto positionalArgs = parser.getPositionalArgs();
-            checkOptionsAdmissibility(options, QStringList({"i", "id"}));
-            checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+            CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"i", "id"}));
+            CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
 
             QString arg;
             if(!positionalArgs.isEmpty())
@@ -470,7 +428,7 @@ QStringList setupInferenceRulesPlugins()
 
 void deleteLogicalSystem(const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"s", "silent", "h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"s", "silent", "h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -480,7 +438,7 @@ void deleteLogicalSystem(const QStringList &options, const QStringList &position
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto systemName = positionalArgs.first();
     checkLogicalSystemExists(systemName);
 
@@ -508,7 +466,7 @@ void deleteLogicalSystem(const QStringList &options, const QStringList &position
 
 void loadLogicalSystem(const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -517,7 +475,7 @@ void loadLogicalSystem(const QStringList &options, const QStringList &positional
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto systemName = positionalArgs.first();
     checkLogicalSystemExists(systemName);
     auto logicalSystemAsssitant = programAssistant.loadLogicalSystem(systemName);
@@ -627,8 +585,8 @@ void logicalSystemMenu(LogicalSystemAssistant &logicalSystemAssistant)
 
 void listTheories(const LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "d", "description"}));
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "d", "description"}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -679,7 +637,7 @@ void listTheories(const LogicalSystemAssistant &logicalSystemAssistant, const QS
 
 void createTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -803,8 +761,8 @@ void setupAxioms(TheoryBuilder &builder)
             const auto options = parser.getOptions();
             const auto positionalArgs = parser.getPositionalArgs();
 
-            checkOptionsAdmissibility(options, QStringList());
-            checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+            CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList());
+            CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
 
             if(mainCommand == "add")
             {
@@ -863,7 +821,7 @@ void checkSetupAxiomsPositionalArgs(const QStringList &positionalArgs)
 
 void loadTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -872,7 +830,7 @@ void loadTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringLis
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto &theoryName = positionalArgs.first();
     auto theoryAssistant = logicalSystemAssistant.loadTheory(theoryName);
 
@@ -883,7 +841,7 @@ void loadTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringLis
 
 void deleteTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "s", "silent"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "s", "silent"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -893,7 +851,7 @@ void deleteTheory(LogicalSystemAssistant &logicalSystemAssistant, const QStringL
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto &theoryName = positionalArgs.first();
     if(options.contains("s") || options.contains("silent"))
     {
@@ -953,7 +911,8 @@ void theoryMenu(TheoryAssistant &theoryAssistant)
             cout << "add            Add proof or plugin" << endl;
             cout << "remove         Remove proof or plugin" << endl;
             cout << "load           Load proof" << endl;
-            cout << "setup          Setup plugin" << endl;
+            cout << "pre            Setup pre formatter" << endl;
+            cout << "post           Setup post formatter" << endl;
             cout << "unload         Unload theory" << endl << endl;
 
             string command;
@@ -966,7 +925,7 @@ void theoryMenu(TheoryAssistant &theoryAssistant)
             //TODO
             if(mainCommand == "list")
             {
-                theoryMenuList(options, positionalArgs);
+                theoryMenuList(theoryAssistant, options, positionalArgs);
             }
             else if(mainCommand == "add")
             {
@@ -980,9 +939,13 @@ void theoryMenu(TheoryAssistant &theoryAssistant)
             {
                 loadProof(theoryAssistant, options, positionalArgs);
             }
-            else if(mainCommand == "setup")
+            else if(mainCommand == "pre")
             {
-
+                setupPreFormatter(theoryAssistant);
+            }
+            else if(mainCommand == "post")
+            {
+                setupPostFormatter(theoryAssistant);
             }
             else if(mainCommand == "unload")
             {
@@ -1005,10 +968,10 @@ void theoryMenu(TheoryAssistant &theoryAssistant)
 }
 
 
-void theoryMenuList(const QStringList &options, const QStringList &positionalArgs)
+void theoryMenuList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "p", "proofs", "a", "axioms", "r", "rules", "e", "pre", "o", "post", "t", "tactics", "d", "description", "l", "loaded"}));
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "p", "proofs", "a", "axioms", "r", "rules", "e", "pre", "o", "post", "t", "tactics", "d", "description", "l", "loaded"}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1042,16 +1005,29 @@ void theoryMenuList(const QStringList &options, const QStringList &positionalArg
         }
         else
         {
-            listPreProcessorPlugins();
         }
     }
     else if(options.contains("e") || options.contains("pre"))
     {
-
+        if(options.contains("l") || options.contains("loaded"))
+        {
+            listCurrentlyLoadedPreProcessors(theoryAssistant);
+        }
+        else
+        {
+            listPreProcessorPlugins();
+        }
     }
     else if(options.contains("o") || options.contains("post"))
     {
-
+        if(options.contains("l") || options.contains("loaded"))
+        {
+            listCurrentlyLoadedPostProcessors(theoryAssistant);
+        }
+        else
+        {
+            listPostProcessorsPlugins();
+        }
     }
 }
 
@@ -1077,8 +1053,8 @@ void listCurrentTheoryAxioms(const TheoryAssistant &theoryAssistant)
 
 void theoryMenuAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "p", "proof", "t", "tactic", "e", "pre", "o", "post"}));
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "p", "proof", "t", "tactic", "e", "pre", "o", "post"}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1164,8 +1140,8 @@ void setupProofPremises(TheoryAssistant &theoryAssistant, QStringList &premises)
             const auto options = parser.getOptions();
             const auto positionalArgs = parser.getPositionalArgs();
 
-            checkOptionsAdmissibility(options, QStringList({}));
-            checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
+            CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({}));
+            CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0, 1}));
 
             if(mainCommand == "add")
             {
@@ -1223,8 +1199,8 @@ void setupProofConclusion(TheoryAssistant &theoryAssistant, QString &conclusion)
 
 void loadProof(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
     //TODO
 
@@ -1435,18 +1411,18 @@ void checkProofPrinterPluginExists(const QString &pluginName)
 
 void setupPreFormatter(TheoryAssistant &theoryAssistant)
 {
-    cout << endl;
-    cout << "Pre Formatter Setup:" << endl;
-    cout << "   list            List pre processors" << endl;
-    cout << "   add             Add pre processor" << endl;
-    cout << "   remove          Remove pre processor" << endl;
-    cout << "   on              Turn pre processor on" << endl;
-    cout << "   off             Turn pre processor off" << endl;
-    cout << "   setup           Setup pre processor" << endl;
-    cout << "   quit            Quit pre formatter setup" << endl;
-
     while(true)
     {
+        cout << endl;
+        cout << "Pre Formatter Setup:" << endl;
+        cout << "   list            List pre processors" << endl;
+        cout << "   add             Add pre processor" << endl;
+        cout << "   remove          Remove pre processor" << endl;
+        cout << "   on              Turn pre processor on" << endl;
+        cout << "   off             Turn pre processor off" << endl;
+        cout << "   setup           Setup pre processor" << endl;
+        cout << "   quit            Quit pre formatter setup" << endl;
+
         string command;
         getline(cin, command);
         parser.parse(command);
@@ -1502,7 +1478,7 @@ void setupPreFormatter(TheoryAssistant &theoryAssistant)
 
 void formatterList(const TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "l", "loaded", "p", "plugins"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "l", "loaded", "p", "plugins"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1513,7 +1489,7 @@ void formatterList(const TheoryAssistant &theoryAssistant, const QStringList &op
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({0}));
 
     if(options.contains("l") || options.contains("loaded"))
     {
@@ -1560,7 +1536,7 @@ void listCurrentlyLoadedPreProcessors(const TheoryAssistant &theoryAssistant)
 
 void formatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help", "i", "id"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1570,7 +1546,7 @@ void formatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, 
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
     if(options.contains("i") || options.contains("index"))
     {
@@ -1601,6 +1577,8 @@ void formatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, 
         {
             theoryAssistant.addPostProcessorPlugin(processorName);
         }
+        cout << endl;
+        cout << processorName + " processor added!" << endl;
     }
     else
     {
@@ -1613,12 +1591,14 @@ void formatterAdd(TheoryAssistant &theoryAssistant, const QStringList &options, 
         {
             theoryAssistant.addPostProcessorPlugin(processorName);
         }
+        cout << endl;
+        cout << processorName + " processor added!" << endl;
     }
 }
 
 void formatterRemove(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1627,7 +1607,7 @@ void formatterRemove(TheoryAssistant &theoryAssistant, const QStringList &option
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
 
     if(options.contains("i") || options.contains("index"))
     {
@@ -1645,7 +1625,7 @@ void formatterRemove(TheoryAssistant &theoryAssistant, const QStringList &option
 
 void formatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1654,7 +1634,7 @@ void formatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &option
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto processorIndex = positionalArgs.first().toInt();
     if(role == StringProcessorRole::PreProcessor)
     {
@@ -1668,7 +1648,7 @@ void formatterTurnOn(TheoryAssistant &theoryAssistant, const QStringList &option
 
 void formatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1677,7 +1657,7 @@ void formatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &optio
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto processorIndex = positionalArgs.first().toInt();
     if(role == StringProcessorRole::PreProcessor)
     {
@@ -1691,7 +1671,7 @@ void formatterTurnOff(TheoryAssistant &theoryAssistant, const QStringList &optio
 
 void processorSetup(TheoryAssistant &theoryAssistant, const QStringList &options, const QStringList &positionalArgs, const StringProcessorRole &role)
 {
-    checkOptionsAdmissibility(options, QStringList({"h", "help"}));
+    CliAuxiliaryFunctions::checkOptionsAdmissibility(options, QStringList({"h", "help"}));
 
     if(options.contains("h") || options.contains("help"))
     {
@@ -1700,7 +1680,7 @@ void processorSetup(TheoryAssistant &theoryAssistant, const QStringList &options
         return;
     }
 
-    checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
+    CliAuxiliaryFunctions::checkPositionalArgumentsExpectedNumber(positionalArgs, QVector<int>({1}));
     const auto processorIndex = positionalArgs.first().toInt();
     if(role == StringProcessorRole::PreProcessor)
     {
@@ -1716,18 +1696,18 @@ void processorSetup(TheoryAssistant &theoryAssistant, const QStringList &options
 
 void setupPostFormatter(TheoryAssistant &theoryAssistant)
 {
-    cout << endl;
-    cout << "Post Formatter Setup:" << endl;
-    cout << "   list            List post processors" << endl;
-    cout << "   add             Add post processor" << endl;
-    cout << "   remove          Remove post processor" << endl;
-    cout << "   on              Turn post processor on" << endl;
-    cout << "   off             Turn post processor off" << endl;
-    cout << "   setup           Setup post processor" << endl;
-    cout << "   quit            Quit post formatter setup" << endl;
-
     while(true)
     {
+        cout << endl;
+        cout << "Post Formatter Setup:" << endl;
+        cout << "   list            List post processors" << endl;
+        cout << "   add             Add post processor" << endl;
+        cout << "   remove          Remove post processor" << endl;
+        cout << "   on              Turn post processor on" << endl;
+        cout << "   off             Turn post processor off" << endl;
+        cout << "   setup           Setup post processor" << endl;
+        cout << "   quit            Quit post formatter setup" << endl;
+
         string command;
         getline(cin, command);
         parser.parse(command);
@@ -1783,6 +1763,6 @@ void setupPostFormatter(TheoryAssistant &theoryAssistant)
 
 void listCurrentlyLoadedPostProcessors(const TheoryAssistant &theoryAssistant)
 {
-    auto processorList = theoryAssistant.listLoadedPreProcessors();
+    auto processorList = theoryAssistant.listLoadedPostProcessors();
     outputOrderedList(processorList);
 }
